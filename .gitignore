@@ -1,16 +1,41 @@
-# Virtual env
+# =========================
+# Python Virtual Environments
+# =========================
 venv/
 .venv/
 env/
 
-# Cache
+# =========================
+# Python cache / compiled
+# =========================
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
+# =========================
 # Local DB / secrets
+# =========================
 site.db
+*.db
 .env
+*.sqlite3
 
-# OS / editor
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# OS / Editor files
+# =========================
 .DS_Store
+Thumbs.db
 .vscode/
+.idea/
+
+# =========================
+# Test / coverage
+# =========================
+.coverage
+htmlcov/
+.pytest_cache/
