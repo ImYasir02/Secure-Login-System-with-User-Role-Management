@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="settings-page relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8 dark:border-white/10 dark:bg-[#080d28]">
+  <div class="pointer-events-none absolute inset-0 hidden dark:block">
+    <div class="absolute left-[-8%] top-[6%] h-56 w-56 rounded-full bg-blue-500/18 blur-3xl"></div>
+    <div class="absolute right-[-8%] top-[25%] h-64 w-64 rounded-full bg-fuchsia-500/14 blur-3xl"></div>
+  </div>
+  <div class="relative">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600">Preferences</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black">Settings</h1>
+      <p class="mt-2 text-sm text-slate-700">Manage your account preferences and security shortcuts.</p>
+    </div>
+    <a href="{{ url_for(panel_endpoint) }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+      Back to {% if is_admin_owner %}Owner Panel{% else %}Dashboard{% endif %}
+    </a>
+  </div>
+
+  <form method="POST" class="mt-6 grid gap-4 sm:grid-cols-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="save">
+
+    <label class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-black">Email Updates</p>
+          <p class="mt-1 text-xs text-slate-500">Receive account-related updates.</p>
+        </div>
+        <input type="checkbox" name="email_updates" {% if email_updates %}checked{% endif %} class="h-4 w-4">
+      </div>
+    </label>
+
+    <label class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-black">Compact Layout</p>
+          <p class="mt-1 text-xs text-slate-500">Use compact spacing on dashboard tables.</p>
+        </div>
+        <input type="checkbox" name="compact_layout" {% if compact_layout %}checked{% endif %} class="h-4 w-4">
+      </div>
+    </label>
+
+    <label class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-black">Security Alerts</p>
+          <p class="mt-1 text-xs text-slate-500">Get alerts for suspicious login attempts.</p>
+        </div>
+        <input type="checkbox" name="security_alerts" {% if security_alerts %}checked{% endif %} class="h-4 w-4">
+      </div>
+    </label>
+
+    <label class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-black">Public Profile</p>
+          <p class="mt-1 text-xs text-slate-500">Show profile info in public sections.</p>
+        </div>
+        <input type="checkbox" name="public_profile" {% if public_profile %}checked{% endif %} class="h-4 w-4">
+      </div>
+    </label>
+
+    <label class="rounded-2xl border border-slate-300 p-4 sm:col-span-2 dark:border-white/10 dark:bg-white/5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-black">Weekly Report</p>
+          <p class="mt-1 text-xs text-slate-500">Get a weekly summary of account activity.</p>
+        </div>
+        <input type="checkbox" name="weekly_report" {% if weekly_report %}checked{% endif %} class="h-4 w-4">
+      </div>
+    </label>
+
+    <div class="sm:col-span-2 flex flex-wrap gap-3">
+      <button type="submit" class="rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500 dark:shadow-[0_10px_30px_rgba(79,70,229,0.35)]">Save Settings</button>
+      <a href="{{ url_for('forgot_password') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Reset Password</a>
+      <a href="{{ url_for('security_settings') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Security Settings</a>
+    </div>
+  </form>
+
+  <div class="settings-security-quick mt-6 grid gap-4 lg:grid-cols-3">
+    <div class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5 lg:col-span-2">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-cyan-200">Security Settings</p>
+      <h2 class="mt-2 text-xl font-semibold text-black dark:text-white">Security Quick Actions</h2>
+      <p class="mt-2 text-sm text-slate-700 dark:text-white/75">Manage password, two-factor authentication, login activity, and active sessions.</p>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <a href="{{ url_for('security_settings') }}" class="rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500 dark:shadow-[0_10px_30px_rgba(79,70,229,0.35)]">Open Security Settings</a>
+        <a href="{{ url_for('forgot_password') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Reset Password</a>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+      <p class="text-sm font-semibold text-black dark:text-white">Recommended</p>
+      <ul class="mt-2 space-y-2 text-xs text-slate-600 dark:text-white/70">
+        <li>Enable 2FA in Security Settings</li>
+        <li>Review recent login activity</li>
+        <li>Logout old devices if needed</li>
+      </ul>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section class="settings-danger-zone mx-auto mt-6 max-w-5xl rounded-3xl border border-rose-300 bg-white p-6 shadow-sm dark:border-rose-500/40 dark:bg-[#180b16]">
+  <h2 class="text-xl font-semibold text-black dark:text-white">Danger Zone</h2>
+  <p class="mt-2 text-sm text-slate-700 dark:text-white/75">Delete account permanently. This action cannot be undone.</p>
+
+  <form method="POST" class="mt-4 grid gap-3 sm:grid-cols-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="delete_account">
+
+    <input type="password" name="current_password" required placeholder="Current password"
+           class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-black focus:border-black focus:outline-none dark:border-white/15 dark:bg-white/5 dark:text-white">
+
+    <input type="text" name="confirm_delete" required placeholder="Type DELETE to confirm"
+           class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-black focus:border-black focus:outline-none dark:border-white/15 dark:bg-white/5 dark:text-white">
+
+    <div class="sm:col-span-2">
+      <button type="submit" class="rounded-xl border border-rose-400 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">Delete Account</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

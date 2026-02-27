@@ -1,0 +1,242 @@
+name: Security Headers Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Domain or URL to verify (e.g. example.com or https://example.com)'
+        required: false
+        default: ''
+      cloudflare_expected:
+        description: 'Expect Cloudflare headers'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    - cron: '15 3 * * *' # Daily at 03:15 UTC
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Priority order:
+      # 1) workflow_dispatch input
+      # 2) repo variable SECURITY_CHECK_TARGET_URL
+      # 3) repo secret SECURITY_CHECK_TARGET_URL
+      TARGET_URL_INPUT: ${{ github.event.inputs.target_url }}
+      TARGET_URL_VAR: ${{ vars.SECURITY_CHECK_TARGET_URL }}
+      TARGET_URL_SECRET: ${{ secrets.SECURITY_CHECK_TARGET_URL }}
+      CLOUDFLARE_VAR: ${{ vars.SECURITY_CHECK_CLOUDFLARE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve target URL
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${TARGET_URL_INPUT:-}"
+          if [[ -z "$TARGET" ]]; then TARGET="${TARGET_URL_VAR:-}"; fi
+          if [[ -z "$TARGET" ]]; then TARGET="${TARGET_URL_SECRET:-}"; fi
+          if [[ -z "$TARGET" ]]; then
+            echo "No target URL configured. Set workflow input or repo variable/secret SECURITY_CHECK_TARGET_URL." >&2
+            exit 1
+          fi
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+
+          # workflow_dispatch boolean input is only available for manual runs
+          CF_FLAG=""
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ github.event.inputs.cloudflare_expected || 'false' }}" == "true" ]]; then
+              CF_FLAG="--cloudflare"
+            fi
+          else
+            # scheduled run: use repo variable SECURITY_CHECK_CLOUDFLARE=true/false
+            if [[ "${CLOUDFLARE_VAR:-false}" == "true" ]]; then
+              CF_FLAG="--cloudflare"
+            fi
+          fi
+          echo "cf_flag=$CF_FLAG" >> "$GITHUB_OUTPUT"
+
+      - name: Make scripts executable
+        run: |
+          chmod +x verify_security.sh verify_security_json.sh verify_security_report.sh
+
+      - name: Run security JSON verification
+        id: verify_json
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          OUT_JSON="reports/security_report.json"
+          set +e
+          ./verify_security_json.sh "${{ steps.resolve.outputs.target }}" ${{ steps.resolve.outputs.cf_flag }} --out "$OUT_JSON"
+          EXIT_CODE=$?
+          set -e
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          echo "json_path=$OUT_JSON" >> "$GITHUB_OUTPUT"
+          # Do not fail immediately; upload artifacts first
+          exit 0
+
+      - name: Generate markdown security report
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          OUT_MD="reports/security_report.md"
+          set +e
+          ./verify_security_report.sh "${{ steps.resolve.outputs.target }}" ${{ steps.resolve.outputs.cf_flag }} --out "$OUT_MD"
+          REPORT_EXIT=$?
+          set -e
+          echo "Markdown report generated (exit=$REPORT_EXIT)"
+          # We intentionally don't fail here; final gate uses JSON checker exit code.
+
+      - name: Upload security reports
+        id: upload_reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports-${{ github.run_number }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Print JSON summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f "${{ steps.verify_json.outputs.json_path }}" ]]; then
+            echo "Security JSON summary:"
+            cat "${{ steps.verify_json.outputs.json_path }}"
+          fi
+
+      - name: Create GitHub issue on failure
+        if: always() && steps.verify_json.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '${{ steps.verify_json.outputs.json_path }}';
+            let report = null;
+            try {
+              if (fs.existsSync(path)) {
+                report = JSON.parse(fs.readFileSync(path, 'utf8'));
+              }
+            } catch (e) {
+              core.warning(`Unable to parse JSON report: ${e.message}`);
+            }
+
+            const target = report?.target || '${{ steps.resolve.outputs.target }}';
+            const status = report?.status || 'FAIL';
+            const counts = report?.counts || {};
+            const failItems = report?.results?.fail || [];
+            const warnItems = report?.results?.warn || [];
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const artifactsPageUrl = `${runUrl}#artifacts`;
+            const artifactId = '${{ steps.upload_reports.outputs[''artifact-id''] }}';
+            const artifactDirectUrl = artifactId
+              ? `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/artifacts/${artifactId}`
+              : null;
+
+            function computeSeverity(fails, failList) {
+              const joined = (failList || []).join(' | ').toLowerCase();
+              const criticalTerms = [
+                'https redirect',
+                'content-security-policy',
+                'strict-transport-security',
+                'hsts',
+                'x-frame-options',
+                'referrer-policy'
+              ];
+              const hasCritical = criticalTerms.some(term => joined.includes(term));
+              if (hasCritical || (fails ?? 0) >= 3) return 'High';
+              if ((fails ?? 0) >= 1) return 'Medium';
+              return 'Low';
+            }
+            const severity = computeSeverity(counts.fail, failItems);
+            const title = `[${severity}] [Security Check Failure] ${target}`;
+
+            const body = [
+              `## [${severity}] Automated Security Verification Failure`,
+              '',
+              `- **Target**: \`${target}\``,
+              `- **Status**: **${status}**`,
+              `- **Severity**: **${severity}**`,
+              `- **Workflow**: \`${context.workflow}\``,
+              `- **Run**: ${runUrl}`,
+              `- **Commit**: \`${context.sha}\``,
+              '',
+              '### Counts',
+              '',
+              `- PASS: ${counts.pass ?? 'n/a'}`,
+              `- WARN: ${counts.warn ?? 'n/a'}`,
+              `- FAIL: ${counts.fail ?? 'n/a'}`,
+              '',
+              '### Failed Checks',
+              '',
+              ...(failItems.length ? failItems.map(x => `- ${x}`) : ['- See uploaded artifact for details']),
+              '',
+              '### Warnings',
+              '',
+              ...(warnItems.length ? warnItems.map(x => `- ${x}`) : ['- None']),
+              '',
+              '### Artifacts',
+              '',
+              `- Artifacts page: ${artifactsPageUrl}`,
+              ...(artifactDirectUrl ? [`- Direct artifact link: ${artifactDirectUrl}`] : []),
+              '- Contains `security_report.json` and `security_report.md`.',
+              '',
+              '_This issue was created automatically by the security header check workflow._'
+            ].join('\n');
+
+            // Avoid spamming duplicates for same target if one is already open.
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security-automation',
+              per_page: 100,
+            });
+            const existing = issues.find(i =>
+              i.title.includes('[Security Check Failure]') && i.title.includes(target)
+            );
+            if (existing) {
+              core.info(`Open issue already exists: #${existing.number}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `New failure detected in run ${runUrl} (Severity: **${severity}**)\n\n${body}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['security-automation', 'security'],
+              });
+            }
+
+      - name: Fail workflow if security checks failed
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXIT_CODE="${{ steps.verify_json.outputs.exit_code }}"
+          if [[ -z "$EXIT_CODE" ]]; then
+            echo "Missing verification exit code; treating as failure." >&2
+            exit 1
+          fi
+          if [[ "$EXIT_CODE" != "0" ]]; then
+            echo "Security verification failed with exit code $EXIT_CODE" >&2
+            exit "$EXIT_CODE"
+          fi
+          echo "Security verification passed."

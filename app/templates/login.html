@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="login-shell relative -mx-4 overflow-hidden border-y border-slate-200 bg-white sm:-mx-6 lg:-mx-8 lg:rounded-3xl lg:border dark:border-white/10 dark:bg-[#070b23]">
+  <div class="pointer-events-none absolute inset-0 hidden dark:block">
+    <div class="absolute -left-20 top-10 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl"></div>
+    <div class="absolute left-1/3 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-fuchsia-500/10 blur-3xl"></div>
+    <div class="absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-cyan-400/15 blur-3xl"></div>
+    <div class="absolute inset-0 opacity-40" style="background: radial-gradient(circle at 18% 22%, rgba(59,130,246,0.28), transparent 42%), radial-gradient(circle at 78% 68%, rgba(217,70,239,0.20), transparent 44%);"></div>
+  </div>
+
+  <div class="relative grid min-h-[680px] lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+    <div class="relative z-10 bg-white px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12 dark:bg-transparent">
+      <div class="mx-auto max-w-lg">
+        <div class="hidden">
+          <h1 class="text-4xl font-semibold tracking-tight text-black sm:text-5xl">Log In to HackerEarth</h1>
+        </div>
+        <div class="block">
+          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-pink-300/90">Secure Access</p>
+          <h1 class="mt-3 text-4xl font-semibold tracking-tight text-black sm:text-5xl dark:text-white">Log In to SecureLogin</h1>
+          <p class="mt-3 text-sm leading-6 text-neutral-700 dark:text-white/75">Sign in to your account securely.</p>
+        </div>
+
+        <div class="mt-7 hidden grid-cols-2 gap-3 sm:hidden">
+          <button type="button" class="flex h-12 items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-neutral-700 shadow-sm">
+            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-bold text-white" style="background: conic-gradient(#4285F4 0 25%, #34A853 25% 50%, #FBBC05 50% 75%, #EA4335 75% 100%);">G</span>
+            <span>Google</span>
+          </button>
+          <button type="button" class="flex h-12 items-center justify-center gap-3 rounded-lg border border-black bg-black px-4 text-sm font-medium text-white shadow-sm">
+            <span class="text-base leading-none">◉</span>
+            <span>GitHub</span>
+          </button>
+        </div>
+
+        <div class="mt-7 hidden items-center gap-4 sm:hidden" aria-hidden="true">
+          <div class="h-px flex-1 bg-[#cfcfd6]"></div>
+          <span class="text-sm font-semibold text-[#1b1b1b]">OR</span>
+          <div class="h-px flex-1 bg-[#cfcfd6]"></div>
+        </div>
+
+        <form method="POST" class="mt-8 space-y-5">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+
+          <div>
+            <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600 dark:text-white/70">Email Address</label>
+            <input name="email" required type="email" maxlength="120" placeholder="email@example.com"
+                   class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-black shadow-sm outline-none transition placeholder:text-slate-400 focus:border-black focus:ring-2 focus:ring-black/10 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-white/35 dark:focus:border-indigo-300 dark:focus:ring-indigo-300/20" />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600 dark:text-white/70">Enter Password</label>
+            <div class="relative">
+              <input id="loginPassword" name="password" required minlength="8" type="password" placeholder="Enter password"
+                     data-light-placeholder="Enter password"
+                     class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-24 text-sm text-black shadow-sm outline-none transition placeholder:text-slate-400 focus:border-black focus:ring-2 focus:ring-black/10 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-white/35 dark:focus:border-indigo-300 dark:focus:ring-indigo-300/20" />
+              <button type="button" data-toggle-password="loginPassword"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 transition hover:bg-slate-100 dark:border-white/15 dark:bg-white/10 dark:text-white/85 dark:hover:bg-white/15">
+                👁
+              </button>
+            </div>
+            <div class="mt-2 h-2 rounded-full bg-slate-200 dark:bg-white/10">
+              <div id="loginStrength" class="h-2 w-0 rounded-full bg-rose-500 transition-all"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-3">
+            <a href="{{ url_for('forgot_password') }}" class="text-xs font-semibold text-indigo-600 underline decoration-indigo-300 underline-offset-2 dark:text-cyan-200 dark:decoration-cyan-300/60">Forgot password?</a>
+            <p class="text-xs text-neutral-500 dark:text-white/50">Sign in to your account securely.</p>
+          </div>
+
+          <button type="submit" class="w-full rounded-xl bg-black px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:via-violet-500 dark:to-blue-500 dark:shadow-[0_10px_30px_rgba(79,70,229,0.35)] dark:hover:brightness-110">
+            Login
+          </button>
+        </form>
+
+        <p class="mt-5 text-center text-sm text-neutral-600 dark:text-white/65">
+          Don't have an account?
+          <a href="{{ url_for('register') }}" class="font-semibold text-indigo-600 dark:text-cyan-200">Sign Up</a>
+        </p>
+
+        <div class="mt-7 grid gap-3 lg:hidden">
+          <div class="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-black dark:border-white/10 dark:bg-white/5 dark:text-white">
+            <p class="font-semibold">Enable Two-Factor Authentication</p>
+            <p class="mt-1 text-xs leading-5 text-neutral-600 dark:text-white/70">Use Google Authenticator code for secure login.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-black dark:border-white/10 dark:bg-white/5 dark:text-white">
+            <p class="font-semibold">Login Activity History</p>
+            <p class="mt-1 text-xs leading-5 text-neutral-600 dark:text-white/70">Track recent login attempts in Security Settings.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="relative hidden overflow-hidden border-l border-slate-200 bg-[#cfd7ff] px-8 py-10 lg:block dark:border-white/10 dark:bg-transparent">
+      <div class="absolute inset-0 hidden dark:block">
+        <div class="absolute inset-0 bg-[linear-gradient(115deg,#0a1036_10%,#111a59_48%,#17103d_100%)]"></div>
+        <div class="absolute left-[-8%] top-[12%] h-64 w-64 rounded-full bg-blue-500/25 blur-3xl"></div>
+        <div class="absolute right-[8%] top-[52%] h-72 w-72 rounded-full bg-pink-500/20 blur-3xl"></div>
+        <div class="absolute inset-y-0 right-0 w-[45%] bg-[radial-gradient(circle_at_30%_50%,rgba(34,211,238,0.22),transparent_58%)]"></div>
+      </div>
+
+        <div class="relative z-10 flex h-full flex-col">
+        <div class="hidden">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600/90">SUCCESS STORIES</p>
+          <h2 class="mt-6 max-w-sm text-5xl font-semibold leading-[1.06] text-[#0f0f12]">
+            See how others have<br>thrived
+          </h2>
+          <div class="mt-12 flex items-center justify-between gap-4">
+            <p class="text-2xl font-medium text-[#171717]">Achievement</p>
+            <p class="text-2xl font-semibold tracking-tight text-[#171717]">amdocs</p>
+          </div>
+          <p class="mt-8 max-w-md text-[15px] leading-8 text-[#171717]">
+            "My experience with HackerEarth has been truly rewarding! It provided a platform to test and enhance my problem-solving skills, engage with real-world coding challenges, and gain valuable exposure to industry-level problem setting."
+          </p>
+        </div>
+
+        <div class="block">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600/90 dark:text-pink-300">Secure Access</p>
+          <h2 class="mt-5 max-w-sm text-4xl font-semibold leading-tight text-black dark:text-white">
+            Login
+          </h2>
+          <p class="mt-3 max-w-sm text-sm leading-6 text-neutral-700 dark:text-white/75">Sign in to your account securely.</p>
+        </div>
+
+        <div class="mt-8 space-y-4">
+          <div class="rounded-2xl border border-black/10 bg-white/65 p-4 backdrop-blur dark:border-white/10 dark:bg-white/5">
+            <p class="text-sm font-semibold text-black dark:text-white">Enable Two-Factor Authentication</p>
+            <p class="mt-1 text-sm leading-6 text-neutral-700 dark:text-white/75">Use Google Authenticator code for secure login.</p>
+          </div>
+          <div class="rounded-2xl border border-black/10 bg-white/65 p-4 backdrop-blur dark:border-white/10 dark:bg-white/5">
+            <p class="text-sm font-semibold text-black dark:text-white">Login Activity History</p>
+            <p class="mt-1 text-sm leading-6 text-neutral-700 dark:text-white/75">Track recent login attempts in Security Settings.</p>
+          </div>
+        </div>
+
+        <div class="mt-auto rounded-2xl border border-black/10 bg-white/70 p-5 backdrop-blur dark:border-white/10 dark:bg-white/5">
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600 dark:text-cyan-200/90">Secure Access</p>
+          <p class="mt-3 text-lg leading-7 text-neutral-800 dark:text-white/85">Sign in to your account securely.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+<script>
+  document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.getAttribute('data-toggle-password'));
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  });
+  const loginPassword = document.getElementById('loginPassword');
+  const loginStrength = document.getElementById('loginStrength');
+  if (loginPassword && loginStrength) {
+    if (!document.documentElement.classList.contains('dark')) {
+      loginPassword.placeholder = loginPassword.getAttribute('data-light-placeholder') || loginPassword.placeholder;
+    }
+    loginPassword.addEventListener('input', () => {
+      const v = loginPassword.value || '';
+      let score = 0;
+      if (v.length >= 8) score += 30;
+      if (/[A-Z]/.test(v)) score += 20;
+      if (/[a-z]/.test(v)) score += 20;
+      if (/\d/.test(v)) score += 15;
+      if (/[^A-Za-z0-9]/.test(v)) score += 15;
+      loginStrength.style.width = score + '%';
+      loginStrength.className = 'h-2 rounded transition-all ' + (score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-rose-500');
+    });
+  }
+</script>
+{% if recaptcha_site_key %}
+  <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
+  <script>
+    grecaptcha.ready(function () {
+      grecaptcha.execute('{{ recaptcha_site_key }}', {action: 'login'}).then(function (token) {
+        const input = document.getElementById('g-recaptcha-response');
+        if (input) input.value = token;
+      });
+    });
+  </script>
+{% endif %}
+{% endblock %}

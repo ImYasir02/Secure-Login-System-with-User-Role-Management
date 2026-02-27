@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+{% macro vault_card(item) %}
+<article class="rounded-2xl border border-slate-300 p-5 dark:border-white/10 dark:bg-white/5">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="flex items-start gap-2">
+      <input
+        type="checkbox"
+        class="vault-bulk-checkbox mt-1 h-4 w-4 rounded border-slate-300"
+        form="vaultBulkForm"
+        name="selected_vault_ids"
+        value="{{ item.id }}"
+        aria-label="Select {{ item.label }}"
+      >
+      <div>
+        <h3 class="text-lg font-semibold text-black dark:text-white">{{ item.label }}</h3>
+        <p class="mt-1 text-xs text-slate-500">{{ item.original_filename }}</p>
+        {% if item.note %}
+          <p class="mt-2 text-sm text-slate-700 dark:text-white/75">{{ item.note }}</p>
+        {% endif %}
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-white/70">
+          {% if item.folder_tag %}
+            <span class="rounded-full border border-slate-300 px-2 py-0.5">Folder: {{ item.folder_tag }}</span>
+          {% endif %}
+          <span class="rounded-full border border-slate-300 px-2 py-0.5">{{ item.visibility_status|title }}</span>
+          <span class="rounded-full border border-slate-300 px-2 py-0.5">{{ (item.size_bytes / (1024 * 1024))|round(2) }} MB</span>
+          <span class="rounded-full border border-slate-300 px-2 py-0.5">Downloads: {{ item.download_count }}</span>
+          {% if item.pin_protected %}
+            <span class="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200">Code Locked</span>
+          {% endif %}
+          {% if item.share_expires_at %}
+            <span class="rounded-full border border-slate-300 px-2 py-0.5 {% if item.share_expired %}text-rose-700 border-rose-300 dark:text-rose-300 dark:border-rose-400/40{% endif %}">
+              Share Expiry: {{ item.share_expires_at.strftime('%Y-%m-%d %H:%M UTC') }}
+            </span>
+          {% endif %}
+          <span class="rounded-full border border-slate-300 px-2 py-0.5">{{ item.created_at|timeago }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <form method="POST" action="{{ url_for('vault_file_download', vault_file_id=item.id) }}" class="flex items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if item.pin_protected %}
+          <input type="password" name="file_pin" placeholder="PIN/Password" minlength="4" maxlength="64" required class="w-32 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        {% endif %}
+        <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+          Download
+        </button>
+      </form>
+      <button type="button" class="vault-share-native rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10" data-share-url="{{ item.share_url }}" data-share-title="{{ item.label }}">
+        Share
+      </button>
+      <button type="button" class="vault-copy-link rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10" data-link="{{ item.share_url }}">
+        Copy Link
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="visibility">
+      <input type="hidden" name="vault_file_id" value="{{ item.id }}">
+      <div class="flex items-center gap-2">
+        <select name="visibility_status" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+          <option value="private" {% if item.visibility_status == 'private' %}selected{% endif %}>Private</option>
+          <option value="public" {% if item.visibility_status == 'public' %}selected{% endif %}>Public</option>
+        </select>
+        <button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Save</button>
+      </div>
+    </form>
+
+    <form method="POST" class="flex items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="toggle_share">
+      <input type="hidden" name="vault_file_id" value="{{ item.id }}">
+      <select name="share_expiry" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <option value="never" {% if item.share_expiry_choice == 'never' %}selected{% endif %}>No Expiry</option>
+        <option value="24h" {% if item.share_expiry_choice == '24h' %}selected{% endif %}>24h</option>
+        <option value="7d" {% if item.share_expiry_choice == '7d' %}selected{% endif %}>7d</option>
+      </select>
+      <button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+        {% if item.share_enabled %}Disable{% else %}Enable{% endif %}
+      </button>
+    </form>
+
+    <form method="POST" class="flex items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="regenerate_share">
+      <input type="hidden" name="vault_file_id" value="{{ item.id }}">
+      <select name="share_expiry" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <option value="never" {% if item.share_expiry_choice == 'never' %}selected{% endif %}>No Expiry</option>
+        <option value="24h" {% if item.share_expiry_choice == '24h' %}selected{% endif %}>24h</option>
+        <option value="7d" {% if item.share_expiry_choice == '7d' %}selected{% endif %}>7d</option>
+      </select>
+      <button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+        Regen Link
+      </button>
+    </form>
+
+  </div>
+
+  <div class="mt-3 flex items-center justify-between rounded-xl border border-slate-300 p-2 dark:border-white/15 dark:bg-white/5">
+    <p class="text-xs text-slate-600 dark:text-white/70">Quick actions: rename, move, password, delete</p>
+    <button type="button" class="vault-open-modal inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10" data-target="vaultModal{{ item.id }}">
+      <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <circle cx="3" cy="8" r="1.4"></circle>
+        <circle cx="8" cy="8" r="1.4"></circle>
+        <circle cx="13" cy="8" r="1.4"></circle>
+      </svg>
+      Action Menu
+    </button>
+  </div>
+
+  <div class="mt-3 rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs dark:border-white/15 dark:bg-white/5">
+    <div class="break-all text-slate-700 dark:text-white/80">{{ item.share_url }}</div>
+    <div class="mt-2 flex flex-wrap gap-2">
+      <a href="https://wa.me/?text={{ item.share_text_encoded }}%20{{ item.share_url_encoded }}" target="_blank" rel="noopener" class="rounded-md border border-slate-300 px-2 py-1 dark:border-white/15">WhatsApp</a>
+      <a href="https://t.me/share/url?url={{ item.share_url_encoded }}&text={{ item.share_text_encoded }}" target="_blank" rel="noopener" class="rounded-md border border-slate-300 px-2 py-1 dark:border-white/15">Telegram</a>
+      <a href="{{ item.share_url }}" target="_blank" rel="noopener" class="rounded-md border border-slate-300 px-2 py-1 dark:border-white/15">Open Shared Link</a>
+    </div>
+  </div>
+
+  <div id="vaultModal{{ item.id }}" class="vault-modal fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" data-close-modal></div>
+    <div class="relative mx-auto mt-16 w-[92%] max-w-xl rounded-2xl border border-slate-300 bg-white p-4 shadow-xl dark:border-white/15 dark:bg-[#0b112f]">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-black dark:text-white">File Actions: {{ item.label }}</h3>
+        <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10" data-close-modal>Close</button>
+      </div>
+      <form method="POST" class="vault-modal-form space-y-2" data-pin-protected="{{ 1 if item.pin_protected else 0 }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="quick_action">
+        <input type="hidden" name="vault_file_id" value="{{ item.id }}">
+        <select name="quick_action" class="vault-modal-action w-full rounded-lg border border-slate-300 px-2 py-2 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white" required>
+          <option value="">Choose action...</option>
+          <option value="edit_details">Edit Details (Name/Folder/Note)</option>
+          <option value="rename">Rename File</option>
+          <option value="move">Move To Folder</option>
+          <option value="set_password">Set / Change Password</option>
+          <option value="remove_password">Remove Password</option>
+          <option value="delete">Delete File</option>
+        </select>
+        <input type="text" name="quick_label" value="{{ item.label }}" maxlength="160" placeholder="New file name" class="vault-modal-field vault-modal-field-edit_details vault-modal-field-rename hidden w-full rounded-lg border border-slate-300 px-2 py-2 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <input type="text" name="quick_folder_tag" value="{{ item.folder_tag }}" maxlength="80" placeholder="Target folder name" class="vault-modal-field vault-modal-field-edit_details vault-modal-field-move hidden w-full rounded-lg border border-slate-300 px-2 py-2 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <textarea name="quick_note" rows="3" maxlength="3000" placeholder="Update note (optional)" class="vault-modal-field vault-modal-field-edit_details hidden w-full rounded-lg border border-slate-300 px-2 py-2 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">{{ item.note }}</textarea>
+        <input type="password" name="file_pin" minlength="4" maxlength="64" placeholder="New password / PIN" class="vault-modal-field vault-modal-field-set_password hidden w-full rounded-lg border border-slate-300 px-2 py-2 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <input type="password" name="file_pin_confirm" minlength="4" maxlength="64" placeholder="Confirm password" class="vault-modal-field vault-modal-field-set_password hidden w-full rounded-lg border border-slate-300 px-2 py-2 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <input type="password" name="current_pin" minlength="4" maxlength="64" placeholder="Current password" class="vault-modal-field vault-modal-field-remove_password vault-modal-field-delete vault-modal-field-delete-protected hidden w-full rounded-lg border border-slate-300 px-2 py-2 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10" data-close-modal>Cancel</button>
+          <button type="submit" class="vault-modal-submit rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Apply</button>
+        </div>
+      </form>
+      <div class="mt-3 rounded-xl border border-slate-300 p-3 dark:border-white/15 dark:bg-white/5">
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">Version History</p>
+          <div class="flex items-center gap-2">
+            <select class="vault-history-range rounded-lg border border-slate-300 px-2 py-1 text-[11px] dark:border-white/15 dark:bg-white/5 dark:text-white">
+              <option value="today">Today</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="all" selected>All</option>
+            </select>
+            <a class="vault-history-csv rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10" data-base-url="{{ url_for('vault_file_history_csv', vault_file_id=item.id) }}" href="{{ url_for('vault_file_history_csv', vault_file_id=item.id, range='all') }}">
+              CSV
+            </a>
+          </div>
+        </div>
+        <div class="mt-2 max-h-44 space-y-2 overflow-y-auto pr-1">
+          {% for h in item.history_rows %}
+            <div class="vault-history-item rounded-lg border border-slate-200 p-2 text-[11px] dark:border-white/10" data-created-at="{{ h.created_at_iso }}">
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-semibold text-slate-700 dark:text-white/85">{{ h.event_type.replace('_', ' ')|title }}</span>
+                <span class="text-slate-500">{{ h.created_at.strftime('%Y-%m-%d %H:%M UTC') if h.created_at else 'n/a' }}</span>
+              </div>
+              {% if h.details %}
+                <p class="mt-1 text-slate-600 dark:text-white/70">{{ h.details }}</p>
+              {% endif %}
+              <p class="mt-1 text-slate-500">By: {{ h.actor_name }}</p>
+            </div>
+          {% else %}
+            <p class="vault-history-empty text-xs text-slate-500 dark:text-white/65">No history yet for this file.</p>
+          {% endfor %}
+          <p class="vault-history-empty hidden text-xs text-slate-500 dark:text-white/65">No history entries for selected range.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</article>
+{% endmacro %}
+
+{% block content %}
+<section class="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8">
+  <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">My Files Space</p>
+  <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black dark:text-white">Secure File Vault</h1>
+  <p class="mt-2 text-sm text-slate-700 dark:text-white/75">
+    Upload files, auto-detect title, rename anytime, move folders, optional password lock, and share securely.
+  </p>
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <article class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5"><p class="text-xs uppercase tracking-wide text-slate-600 dark:text-cyan-200">Total Files</p><p class="mt-2 text-2xl font-semibold text-black dark:text-white">{{ total_items }}</p></article>
+    <article class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5"><p class="text-xs uppercase tracking-wide text-slate-600 dark:text-cyan-200">Private</p><p class="mt-2 text-2xl font-semibold text-black dark:text-white">{{ private_items }}</p></article>
+    <article class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5"><p class="text-xs uppercase tracking-wide text-slate-600 dark:text-cyan-200">Public</p><p class="mt-2 text-2xl font-semibold text-black dark:text-white">{{ public_items }}</p></article>
+    <article class="rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5"><p class="text-xs uppercase tracking-wide text-slate-600 dark:text-cyan-200">Share Enabled</p><p class="mt-2 text-2xl font-semibold text-black dark:text-white">{{ shared_items }}</p></article>
+  </div>
+
+  <div class="mt-6 rounded-2xl border border-slate-300 p-5 dark:border-white/10 dark:bg-white/5">
+    <h2 class="text-lg font-semibold text-black dark:text-white">Upload New File</h2>
+    <form method="POST" enctype="multipart/form-data" class="mt-4 grid gap-3 lg:grid-cols-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="upload">
+      <div class="lg:col-span-2"><label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">File</label><input type="file" name="vault_file" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"></div>
+      <div><label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">Title / Name</label><input type="text" name="label" maxlength="160" placeholder="Leave empty for auto title" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"></div>
+      <div><label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">Folder Tag</label><input type="text" name="folder_tag" maxlength="80" placeholder="Personal / Work" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"></div>
+      <div><label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">Visibility</label><select name="visibility_status" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"><option value="private">Private</option><option value="public">Public</option></select></div>
+      <div class="lg:col-span-4"><label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">Note</label><textarea name="note" rows="2" maxlength="3000" placeholder="Optional notes..." class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"></textarea></div>
+      <div><label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">File Password (Optional)</label><input type="password" name="file_pin" minlength="4" maxlength="64" placeholder="PIN or password lock" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"></div>
+      <div><label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-white/70">Confirm Code</label><input type="password" name="file_pin_confirm" minlength="4" maxlength="64" placeholder="Re-enter code" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"></div>
+      <div class="lg:col-span-1 flex items-end"><button type="submit" class="w-full rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500">Upload Securely</button></div>
+    </form>
+    <p class="mt-3 text-xs text-slate-600 dark:text-white/70">Auto-read title works for photos/docs where metadata is available. You can edit name, note, folder, lock, or delete later anytime.</p>
+  </div>
+
+  <div class="mt-6 rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+    <form method="GET" class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search..." class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white lg:col-span-2">
+      <select name="visibility" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"><option value="all" {% if visibility_filter == 'all' %}selected{% endif %}>All Visibility</option><option value="private" {% if visibility_filter == 'private' %}selected{% endif %}>Private</option><option value="public" {% if visibility_filter == 'public' %}selected{% endif %}>Public</option></select>
+      <select name="share" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"><option value="all" {% if share_filter == 'all' %}selected{% endif %}>All Share</option><option value="on" {% if share_filter == 'on' %}selected{% endif %}>Share Enabled</option><option value="off" {% if share_filter == 'off' %}selected{% endif %}>Share Disabled</option></select>
+      <select name="folder" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"><option value="">All Folders</option>{% for tag in folder_tags %}<option value="{{ tag }}" {% if folder_filter == tag %}selected{% endif %}>{{ tag }}</option>{% endfor %}</select>
+      <select name="sort" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"><option value="newest" {% if sort_order == 'newest' %}selected{% endif %}>Newest</option><option value="oldest" {% if sort_order == 'oldest' %}selected{% endif %}>Oldest</option><option value="name_asc" {% if sort_order == 'name_asc' %}selected{% endif %}>Name A-Z</option><option value="name_desc" {% if sort_order == 'name_desc' %}selected{% endif %}>Name Z-A</option><option value="size_desc" {% if sort_order == 'size_desc' %}selected{% endif %}>Largest</option><option value="size_asc" {% if sort_order == 'size_asc' %}selected{% endif %}>Smallest</option><option value="downloads_desc" {% if sort_order == 'downloads_desc' %}selected{% endif %}>Most Downloaded</option></select>
+      <select name="view" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white"><option value="list" {% if view_mode == 'list' %}selected{% endif %}>List View</option><option value="grid" {% if view_mode == 'grid' %}selected{% endif %}>Folder Grid</option></select>
+      <div class="flex items-center gap-2 lg:col-span-7"><button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Apply</button><a href="{{ url_for('vault') }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Reset</a></div>
+    </form>
+  </div>
+
+  <form id="vaultBulkForm" method="POST" class="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-300 p-3 dark:border-white/10 dark:bg-white/5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs dark:border-white/15 dark:text-white">
+      <input id="vaultSelectAll" type="checkbox" class="h-4 w-4 rounded border-slate-300">
+      Select All
+    </label>
+    <button id="vaultBulkDownloadBtn" type="submit" name="action" value="bulk_download" disabled class="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500">Bulk Download ZIP</button>
+    <input type="text" name="bulk_folder_tag" maxlength="80" placeholder="Move selected to folder..." class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs dark:border-white/15 dark:bg-white/5 dark:text-white">
+    <button id="vaultBulkMoveBtn" type="submit" name="action" value="bulk_move" disabled class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Move Folder</button>
+    <button id="vaultBulkDeleteBtn" type="submit" name="action" value="bulk_delete" disabled class="rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/40 dark:text-rose-300 dark:hover:bg-rose-500/10" onclick="return confirm('Delete selected vault files?');">Bulk Delete</button>
+    <span id="vaultBulkCount" class="text-xs text-slate-600 dark:text-white/70">0 selected</span>
+  </form>
+
+  {% if view_mode == 'grid' %}
+    <div class="mt-4 space-y-6">
+      {% for group in folder_groups %}
+        <section>
+          <h2 class="mb-2 text-lg font-semibold text-black dark:text-white">{{ group.name }}</h2>
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {% for item in group.items %}
+              {{ vault_card(item) }}
+            {% endfor %}
+          </div>
+        </section>
+      {% else %}
+        <div class="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500 dark:border-white/15 dark:text-white/70">No files matched current filters.</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="mt-4 space-y-4">
+      {% for item in vault_items %}
+        {{ vault_card(item) }}
+      {% else %}
+        <div class="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500 dark:border-white/15 dark:text-white/70">No files matched current filters.</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+
+<script>
+  (function () {
+    const checks = Array.from(document.querySelectorAll(".vault-bulk-checkbox"));
+    const countEl = document.getElementById("vaultBulkCount");
+    const downloadBtn = document.getElementById("vaultBulkDownloadBtn");
+    const moveBtn = document.getElementById("vaultBulkMoveBtn");
+    const deleteBtn = document.getElementById("vaultBulkDeleteBtn");
+    const selectAll = document.getElementById("vaultSelectAll");
+    function refreshBulkState() {
+      const selected = checks.filter((x) => x.checked).length;
+      if (countEl) countEl.textContent = `${selected} selected`;
+      if (downloadBtn) downloadBtn.disabled = selected === 0;
+      if (moveBtn) moveBtn.disabled = selected === 0;
+      if (deleteBtn) deleteBtn.disabled = selected === 0;
+      if (selectAll) {
+        selectAll.checked = checks.length > 0 && selected === checks.length;
+      }
+    }
+    checks.forEach((cb) => cb.addEventListener("change", refreshBulkState));
+    if (selectAll) {
+      selectAll.addEventListener("change", () => {
+        checks.forEach((cb) => { cb.checked = selectAll.checked; });
+        refreshBulkState();
+      });
+    }
+    refreshBulkState();
+
+    document.querySelectorAll(".vault-copy-link").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const link = button.getAttribute("data-link") || "";
+        if (!link) return;
+        try {
+          await navigator.clipboard.writeText(link);
+          button.textContent = "Copied";
+          setTimeout(() => { button.textContent = "Copy Link"; }, 1200);
+        } catch (_) {
+          alert("Unable to copy link");
+        }
+      });
+    });
+
+    document.querySelectorAll(".vault-share-native").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const url = button.getAttribute("data-share-url") || "";
+        const title = button.getAttribute("data-share-title") || "Secure Vault File";
+        if (!url) return;
+        if (navigator.share) {
+          try {
+            await navigator.share({ title, text: title, url });
+            return;
+          } catch (_) {}
+        }
+        window.open("https://wa.me/?text=" + encodeURIComponent(title + " " + url), "_blank", "noopener");
+      });
+    });
+
+    let activeVaultModal = null;
+    let lastFocusedBeforeModal = null;
+
+    function focusFirstModalControl(modal) {
+      if (!modal) return;
+      const focusables = Array.from(
+        modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+      ).filter((el) => !el.disabled && !el.classList.contains("hidden"));
+      if (focusables.length) focusables[0].focus();
+    }
+
+    function closeAllVaultModals() {
+      document.querySelectorAll(".vault-modal").forEach((modal) => modal.classList.add("hidden"));
+      document.body.classList.remove("overflow-hidden");
+      activeVaultModal = null;
+      if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === "function") {
+        lastFocusedBeforeModal.focus();
+      }
+      lastFocusedBeforeModal = null;
+    }
+
+    document.querySelectorAll(".vault-open-modal").forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetId = button.getAttribute("data-target");
+        const modal = targetId ? document.getElementById(targetId) : null;
+        if (!modal) return;
+        lastFocusedBeforeModal = button;
+        modal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+        activeVaultModal = modal;
+        setTimeout(() => focusFirstModalControl(modal), 0);
+      });
+    });
+
+    document.querySelectorAll("[data-close-modal]").forEach((button) => {
+      button.addEventListener("click", closeAllVaultModals);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && activeVaultModal) {
+        closeAllVaultModals();
+        return;
+      }
+      if (!activeVaultModal) return;
+
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        const form = activeVaultModal.querySelector(".vault-modal-form");
+        if (form) {
+          event.preventDefault();
+          form.requestSubmit();
+        }
+        return;
+      }
+
+      if (event.key === "Tab") {
+        const focusables = Array.from(
+          activeVaultModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        ).filter((el) => !el.disabled && !el.classList.contains("hidden"));
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    document.querySelectorAll(".vault-modal-form").forEach((form) => {
+      const actionSelect = form.querySelector(".vault-modal-action");
+      const submitBtn = form.querySelector(".vault-modal-submit");
+      const allFields = Array.from(form.querySelectorAll(".vault-modal-field"));
+      const isProtected = form.getAttribute("data-pin-protected") === "1";
+      if (!actionSelect || !submitBtn) return;
+
+      function updateModalForm() {
+        const action = (actionSelect.value || "").trim();
+        allFields.forEach((field) => {
+          const shouldShow = field.classList.contains("vault-modal-field-" + action);
+          const needsProtectedDelete = field.classList.contains("vault-modal-field-delete-protected");
+          const finalShow = shouldShow && !(action === "delete" && needsProtectedDelete && !isProtected);
+          field.classList.toggle("hidden", !finalShow);
+          field.required = finalShow;
+          if (!finalShow && field.tagName === "INPUT" && field.type === "password") {
+            field.value = "";
+          }
+        });
+        submitBtn.textContent = action ? "Apply " + action.replace(/_/g, " ") : "Apply";
+        if (action === "delete") {
+          submitBtn.classList.add("border-rose-300", "text-rose-700");
+        } else {
+          submitBtn.classList.remove("border-rose-300", "text-rose-700");
+        }
+      }
+
+      actionSelect.addEventListener("change", updateModalForm);
+      form.addEventListener("submit", (event) => {
+        const action = (actionSelect.value || "").trim();
+        if (!action) {
+          event.preventDefault();
+          alert("Please choose an action.");
+          return;
+        }
+        if (action === "delete" && !window.confirm("Delete this file from vault?")) {
+          event.preventDefault();
+        }
+      });
+      updateModalForm();
+    });
+
+    function historyStartMs(rangeValue) {
+      const now = new Date();
+      if (rangeValue === "today") {
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        return start.getTime();
+      }
+      if (rangeValue === "7d") {
+        return now.getTime() - (7 * 24 * 60 * 60 * 1000);
+      }
+      return null;
+    }
+
+    document.querySelectorAll(".vault-modal").forEach((modal) => {
+      const rangeSelect = modal.querySelector(".vault-history-range");
+      const csvLink = modal.querySelector(".vault-history-csv");
+      const historyItems = Array.from(modal.querySelectorAll(".vault-history-item"));
+      const emptyBlocks = Array.from(modal.querySelectorAll(".vault-history-empty"));
+      if (!rangeSelect || !csvLink) return;
+
+      function updateHistoryView() {
+        const selectedRange = (rangeSelect.value || "all").trim();
+        const startMs = historyStartMs(selectedRange);
+        let visibleCount = 0;
+        historyItems.forEach((item) => {
+          const raw = item.getAttribute("data-created-at") || "";
+          const ms = raw ? Date.parse(raw) : NaN;
+          const keep = startMs === null || (Number.isFinite(ms) && ms >= startMs);
+          item.classList.toggle("hidden", !keep);
+          if (keep) visibleCount += 1;
+        });
+
+        const baseUrl = csvLink.getAttribute("data-base-url") || csvLink.getAttribute("href") || "";
+        if (baseUrl) {
+          csvLink.setAttribute("href", `${baseUrl}?range=${encodeURIComponent(selectedRange)}`);
+        }
+
+        emptyBlocks.forEach((el) => el.classList.add("hidden"));
+        if (historyItems.length === 0) {
+          if (emptyBlocks[0]) emptyBlocks[0].classList.remove("hidden");
+        } else if (visibleCount === 0) {
+          const fallback = emptyBlocks[emptyBlocks.length - 1] || emptyBlocks[0];
+          if (fallback) fallback.classList.remove("hidden");
+        }
+      }
+
+      rangeSelect.addEventListener("change", updateHistoryView);
+      updateHistoryView();
+    });
+
+    const flashWrap = document.querySelector("main .mb-6.space-y-3");
+    if (flashWrap) {
+      flashWrap.className = "fixed right-4 top-20 z-[70] w-[min(92vw,380px)] space-y-2";
+      flashWrap.style.pointerEvents = "none";
+      Array.from(flashWrap.children).forEach((card, idx) => {
+        const text = ((card.textContent || "").trim()).toLowerCase();
+        const isError = ["error", "invalid", "failed", "unable", "not allowed", "not found"].some((t) => text.includes(t));
+        card.className = (isError
+          ? "rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-lg"
+          : "rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-lg");
+        card.style.pointerEvents = "auto";
+        card.style.opacity = "0";
+        card.style.transform = "translateY(-6px)";
+        card.style.transition = "opacity 220ms ease, transform 220ms ease";
+        setTimeout(() => {
+          card.style.opacity = "1";
+          card.style.transform = "translateY(0)";
+        }, 40 + idx * 60);
+        setTimeout(() => {
+          card.style.opacity = "0";
+          card.style.transform = "translateY(-6px)";
+          setTimeout(() => card.remove(), 220);
+        }, 3600 + idx * 300);
+      });
+    }
+  })();
+</script>
+{% endblock %}

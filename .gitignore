@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.production.example
+__pycache__/
+*.pyc
+instance/*.db
+instance/uploads/
+venv/
+.venv/
+env/
+ENV/
+site.db
+*.sqlite3
+github-upload-ready.zip

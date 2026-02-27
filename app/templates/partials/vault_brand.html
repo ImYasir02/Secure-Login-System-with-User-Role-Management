@@ -1,0 +1,59 @@
+{% set v_size = vault_brand_size|default('md') %}
+{% set v_show_text = vault_brand_show_text|default(true) %}
+{% set v_with_glow = vault_brand_with_glow|default(false) %}
+{% set v_label = vault_brand_label|default('Secure Vault') %}
+{% set v_sub = vault_brand_subtitle|default('Workspace') %}
+{% set v_href = vault_brand_href|default(None) %}
+{% set v_classes = vault_brand_classes|default('') %}
+{% set v_icon_classes = vault_brand_icon_classes|default('') %}
+
+{% if v_size == 'sm' %}
+  {% set wrap_cls = 'gap-2 text-xs' %}
+  {% set icon_box = 'h-8 w-8 rounded-xl' %}
+  {% set icon_svg = 'h-4 w-4' %}
+  {% set title_cls = 'text-xs font-semibold leading-none' %}
+  {% set sub_cls = 'text-[10px]' %}
+{% elif v_size == 'lg' %}
+  {% set wrap_cls = 'gap-3 text-sm' %}
+  {% set icon_box = 'h-12 w-12 rounded-2xl' %}
+  {% set icon_svg = 'h-6 w-6' %}
+  {% set title_cls = 'text-sm font-semibold leading-none' %}
+  {% set sub_cls = 'text-xs' %}
+{% else %}
+  {% set wrap_cls = 'gap-2.5 text-sm' %}
+  {% set icon_box = 'h-10 w-10 rounded-2xl' %}
+  {% set icon_svg = 'h-5 w-5' %}
+  {% set title_cls = 'text-sm font-semibold leading-none' %}
+  {% set sub_cls = 'text-[11px]' %}
+{% endif %}
+
+{% set content %}
+<span class="inline-flex items-center {{ wrap_cls }} {{ v_classes }}">
+  <span class="relative inline-flex {{ icon_box }} items-center justify-center bg-black text-white shadow-sm dark:bg-cyan-300 dark:text-black {{ v_icon_classes }}">
+    {% if v_with_glow %}
+      <span class="vault-glow absolute inset-0 rounded-[inherit]" aria-hidden="true"></span>
+    {% endif %}
+    <svg viewBox="0 0 24 24" aria-hidden="true" class="relative {{ icon_svg }} fill-none stroke-current" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v3"></path>
+      <path d="M6.5 7.5 4.4 5.4"></path>
+      <path d="M17.5 7.5l2.1-2.1"></path>
+      <rect x="5" y="8" width="14" height="10" rx="3"></rect>
+      <path d="M9 12h.01"></path>
+      <path d="M15 12h.01"></path>
+      <path d="M9 15c.8.6 1.8 1 3 1s2.2-.4 3-1"></path>
+    </svg>
+  </span>
+  {% if v_show_text %}
+    <span class="min-w-0">
+      <span class="block {{ title_cls }} text-black dark:text-white">{{ v_label }}</span>
+      <span class="block {{ sub_cls }} text-slate-500 dark:text-white/60">{{ v_sub }}</span>
+    </span>
+  {% endif %}
+</span>
+{% endset %}
+
+{% if v_href %}
+  <a href="{{ v_href }}" class="inline-flex items-center" aria-label="{{ v_label }}">{{ content|safe }}</a>
+{% else %}
+  {{ content|safe }}
+{% endif %}
