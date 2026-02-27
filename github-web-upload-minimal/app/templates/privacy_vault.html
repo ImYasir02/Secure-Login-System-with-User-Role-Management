@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8">
+  <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Security</p>
+  <h1 class="mt-2 text-3xl font-semibold tracking-tight">Privacy Vault</h1>
+  <p class="mt-3 text-sm text-slate-700">
+    This section is dedicated to keeping user documents, photos, and personal records private by default and securely protected.
+  </p>
+
+  <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <article class="rounded-2xl border border-slate-300 p-4">
+      <h2 class="text-sm font-semibold">Storage Security</h2>
+      <ul class="mt-2 space-y-1 text-xs text-slate-700">
+        <li>Files are encrypted using AES-256 before storage.</li>
+        <li>Only allowed file formats are accepted.</li>
+        <li>Maximum upload size is restricted (5MB).</li>
+        <li>Optional malware scan can be enabled for uploads.</li>
+      </ul>
+    </article>
+
+    <article class="rounded-2xl border border-slate-300 p-4">
+      <h2 class="text-sm font-semibold">Access Control</h2>
+      <ul class="mt-2 space-y-1 text-xs text-slate-700">
+        <li>Achievements and goal posts support private/public visibility.</li>
+        <li>Private content is only visible to its owner (or admins).</li>
+        <li>Session checks and role checks protect sensitive operations.</li>
+        <li>CSRF protection is enabled on forms.</li>
+      </ul>
+    </article>
+
+    <article class="rounded-2xl border border-slate-300 p-4">
+      <h2 class="text-sm font-semibold">Account Security</h2>
+      <ul class="mt-2 space-y-1 text-xs text-slate-700">
+        <li>Passwords are hashed using bcrypt.</li>
+        <li>Rate limiting helps block brute-force attempts.</li>
+        <li>Email verification and 2FA options are supported.</li>
+        <li>Secure cookies and strict security headers are applied.</li>
+      </ul>
+    </article>
+
+    <article class="rounded-2xl border border-slate-300 p-4">
+      <h2 class="text-sm font-semibold">Privacy Recommendation</h2>
+      <ul class="mt-2 space-y-1 text-xs text-slate-700">
+        <li>Use private visibility for personal certificates or IDs.</li>
+        <li>Avoid uploading unnecessary sensitive data.</li>
+        <li>Enable 2FA from Security Settings for extra protection.</li>
+        <li>Use strong passwords and rotate them regularly.</li>
+      </ul>
+    </article>
+  </div>
+</section>
+{% endblock %}

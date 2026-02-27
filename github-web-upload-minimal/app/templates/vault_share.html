@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mx-auto max-w-3xl rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8">
+  <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Shared Vault File</p>
+  <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black dark:text-white">{{ vault_item.label }}</h1>
+  <p class="mt-2 text-sm text-slate-700 dark:text-white/75">
+    This file has been shared securely from Secure Vault.
+  </p>
+  {% if access_error %}
+    <div class="mt-4 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/40 dark:bg-rose-500/10 dark:text-rose-300">
+      {{ access_error }}
+      {% if access_locked and access_lock_remaining %}
+        <span class="font-semibold">Try again in {{ ((access_lock_remaining + 59) // 60) }} minute(s).</span>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="mt-6 rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+    <p class="text-xs text-slate-500">Original Name</p>
+    <p class="mt-1 text-sm font-semibold text-black dark:text-white">{{ vault_item.original_filename }}</p>
+    <p class="mt-3 text-xs text-slate-500">Visibility</p>
+    <p class="mt-1 text-sm font-semibold text-black dark:text-white">{{ (vault_item.visibility_status or 'private')|title }}</p>
+    {% if vault_item.note %}
+      <p class="mt-3 text-xs text-slate-500">Note</p>
+      <p class="mt-1 text-sm text-slate-700 dark:text-white/75">{{ vault_item.note }}</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-6 flex flex-wrap gap-3">
+    {% if vault_item.pin_hash %}
+      <form method="POST" action="{{ url_for('vault_share_download', token=vault_item.share_token) }}" class="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="password" name="file_pin" {% if access_locked %}disabled{% else %}required{% endif %} minlength="4" maxlength="64" placeholder="Enter PIN/Password" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <button type="submit" {% if access_locked %}disabled{% endif %} class="rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500">
+          Unlock & Download
+        </button>
+      </form>
+    {% else %}
+      <a href="{{ url_for('vault_share_download', token=vault_item.share_token) }}" class="rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500">
+        Download File
+      </a>
+    {% endif %}
+    <a href="https://wa.me/?text={{ share_text_encoded }}%20{{ share_url_encoded }}" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+      Share WhatsApp
+    </a>
+    <a href="https://t.me/share/url?url={{ share_url_encoded }}&text={{ share_text_encoded }}" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+      Share Telegram
+    </a>
+    <button id="shareFromBrowser" type="button" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+      Share From Browser
+    </button>
+  </div>
+
+  <div class="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-white/80">
+    <div class="break-all">{{ share_url }}</div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    const btn = document.getElementById("shareFromBrowser");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      const url = "{{ share_url }}";
+      const title = "{{ vault_item.label|e }}";
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text: title, url });
+          return;
+        } catch (_) {}
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = "Link Copied";
+        setTimeout(() => { btn.textContent = "Share From Browser"; }, 1200);
+      } catch (_) {
+        window.open("https://wa.me/?text=" + encodeURIComponent(title + " " + url), "_blank", "noopener");
+      }
+    });
+  })();
+</script>
+{% endblock %}

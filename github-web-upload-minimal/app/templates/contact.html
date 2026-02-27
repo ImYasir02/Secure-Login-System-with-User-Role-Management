@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="contact-page-grid grid gap-6 lg:grid-cols-2">
+  <section class="contact-form-card relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#080d28]">
+    <div class="pointer-events-none absolute inset-0 hidden dark:block">
+      <div class="absolute left-[-10%] top-[2%] h-56 w-56 rounded-full bg-blue-500/18 blur-3xl"></div>
+      <div class="absolute right-[-8%] bottom-[-2%] h-64 w-64 rounded-full bg-fuchsia-500/14 blur-3xl"></div>
+    </div>
+    <div class="relative">
+    <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-cyan-200">Contact</p>
+    <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black dark:text-white">Contact Us</h1>
+    <p class="mt-2 text-sm text-slate-600 dark:text-white/75">Use this form to connect, collaborate, share achievements, discuss goals, or ask platform-related questions.</p>
+    <p class="mt-4 text-sm font-medium text-black dark:text-white">Email: <span class="text-slate-700 dark:text-white/80">yasirsec21@gmail.com</span></p>
+
+    <form method="POST" enctype="multipart/form-data" class="contact-form mt-6 space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+
+      <label for="name" class="text-sm font-medium text-slate-700">Full Name <span class="text-red-500">*</span></label>
+      <input id="name" name="name" required maxlength="100" placeholder="Full Name" value="{{ contact_form.get('name', '') }}"
+             class="w-full rounded-2xl border border-slate-300 bg-transparent px-4 py-3 text-sm focus:border-black focus:outline-none">
+
+      <label for="email" class="text-sm font-medium text-slate-700">Email Address <span class="text-red-500">*</span></label>
+      <input id="email" name="email" required type="email" maxlength="120" placeholder="Email Address" value="{{ contact_form.get('email', '') }}"
+             class="w-full rounded-2xl border border-slate-300 bg-transparent px-4 py-3 text-sm focus:border-black focus:outline-none">
+
+      <label for="subject" class="text-sm font-medium text-slate-700">Subject <span class="text-red-500">*</span></label>
+      <select id="subject" name="subject" required
+              class="w-full rounded-2xl border border-slate-300 bg-transparent px-4 py-3 text-sm focus:border-black focus:outline-none">
+        <option value="" disabled {% if not contact_form.get('subject') %}selected{% endif %}>Select a subject</option>
+        {% for option in subject_options %}
+          <option value="{{ option }}" {% if contact_form.get('subject') == option %}selected{% endif %}>{{ option }}</option>
+        {% endfor %}
+      </select>
+
+      <div id="custom-subject-wrap" class="contact-custom-subject hidden">
+        <label for="custom_subject" class="text-sm font-medium text-slate-700">Other Subject <span class="text-red-500">*</span></label>
+        <input id="custom_subject" name="custom_subject" maxlength="120" placeholder="Write your issue topic" value="{{ contact_form.get('custom_subject', '') }}"
+               class="mt-1 w-full rounded-2xl border border-slate-300 bg-transparent px-4 py-3 text-sm focus:border-black focus:outline-none">
+      </div>
+
+      <label for="message" class="text-sm font-medium text-slate-700">Message <span class="text-red-500">*</span></label>
+      <textarea id="message" name="message" required maxlength="3000" rows="5" placeholder="Message"
+                class="w-full rounded-2xl border border-slate-300 bg-transparent px-4 py-3 text-sm focus:border-black focus:outline-none">{{ contact_form.get('message', '') }}</textarea>
+
+      <label for="issue_image" class="text-sm font-medium text-slate-700">Issue Screenshot (Optional)</label>
+      <input id="issue_image" type="file" name="issue_image" accept=".jpg,.jpeg,.png"
+             class="w-full rounded-2xl border border-slate-300 bg-transparent px-4 py-3 text-sm focus:border-black focus:outline-none">
+      <div id="issue-preview-wrap" class="contact-issue-preview hidden rounded-2xl border border-slate-300 p-3">
+        <p class="mb-2 text-xs font-semibold text-slate-600">Preview</p>
+        <img id="issue-preview-img" alt="Issue preview" loading="lazy" class="max-h-56 w-auto rounded-xl border border-slate-200">
+      </div>
+
+      <p class="text-xs text-slate-600">Protected by invisible reCAPTCHA and rate limiting.</p>
+
+      <button type="submit" class="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500 dark:shadow-[0_8px_24px_rgba(79,70,229,0.35)]">Send Message</button>
+    </form>
+
+    <div class="mt-6 rounded-2xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+      <p class="font-semibold">🔒 Your data is encrypted and handled securely.</p>
+      <p class="mt-1">We never share your information with third parties.</p>
+    </div>
+    </div>
+  </section>
+
+  <section class="contact-support-card rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+    <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-pink-300">Support</p>
+    <h2 class="mt-2 text-xl font-semibold tracking-tight text-black dark:text-white">Quick Help Topics</h2>
+    <p class="mt-1 text-xs text-slate-600 dark:text-white/70">Tap any topic to auto-fill the form.</p>
+    <ul class="contact-support-list mt-4 space-y-3 text-sm text-slate-700 dark:text-white/80">
+      <li><button type="button" class="contact-topic-btn w-full rounded-xl border border-slate-300 p-3 text-left transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10" data-subject="Document Storage Help" data-message="I need help with securely storing my files and sharing settings.">Get help with securely storing your documents</button></li>
+      <li><button type="button" class="contact-topic-btn w-full rounded-xl border border-slate-300 p-3 text-left transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10" data-subject="Report a Bug" data-message="I found a technical issue. Please help me resolve it.">Report technical issues</button></li>
+      <li><button type="button" class="contact-topic-btn w-full rounded-xl border border-slate-300 p-3 text-left transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10" data-subject="Other" data-custom-subject="Feature Request" data-message="I want to suggest a new feature for better usability.">Suggest new features</button></li>
+      <li><button type="button" class="contact-topic-btn w-full rounded-xl border border-slate-300 p-3 text-left transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10" data-subject="General Inquiry" data-message="I want to share feedback and my success journey using this platform.">Share your success journey</button></li>
+      <li><button type="button" class="contact-topic-btn w-full rounded-xl border border-slate-300 p-3 text-left transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10" data-subject="Account Support" data-message="I need account recovery support. Please guide me with next steps.">Request account recovery</button></li>
+      <li><button type="button" class="contact-topic-btn w-full rounded-xl border border-slate-300 p-3 text-left transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10" data-subject="General Inquiry" data-message="I would like to discuss collaboration opportunities.">Collaboration opportunities</button></li>
+    </ul>
+  </section>
+</div>
+{% if recaptcha_site_key %}
+  <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
+  <script>
+    grecaptcha.ready(function () {
+      grecaptcha.execute('{{ recaptcha_site_key }}', {action: 'contact'}).then(function (token) {
+        const input = document.getElementById('g-recaptcha-response');
+        if (input) input.value = token;
+      });
+    });
+  </script>
+{% endif %}
+<script>
+  (function () {
+    const subject = document.getElementById('subject');
+    const wrap = document.getElementById('custom-subject-wrap');
+    const customInput = document.getElementById('custom_subject');
+    const issueInput = document.getElementById('issue_image');
+    const issueWrap = document.getElementById('issue-preview-wrap');
+    const issueImg = document.getElementById('issue-preview-img');
+    const message = document.getElementById('message');
+    const name = document.getElementById('name');
+    const email = document.getElementById('email');
+    const topicButtons = Array.from(document.querySelectorAll('.contact-topic-btn'));
+    if (!subject || !wrap || !customInput) return;
+    function toggleCustom() {
+      const isOther = subject.value === 'Other';
+      wrap.classList.toggle('hidden', !isOther);
+      customInput.required = isOther;
+      if (!isOther) customInput.value = '';
+    }
+    subject.addEventListener('change', toggleCustom);
+    toggleCustom();
+
+    if (issueInput && issueWrap && issueImg) {
+      issueInput.addEventListener('change', function () {
+        const file = issueInput.files && issueInput.files[0];
+        if (!file || !file.type.startsWith('image/')) {
+          issueWrap.classList.add('hidden');
+          issueImg.removeAttribute('src');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          issueImg.src = evt.target && evt.target.result ? evt.target.result : '';
+          issueWrap.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    topicButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const nextSubject = btn.getAttribute('data-subject') || '';
+        const nextCustom = btn.getAttribute('data-custom-subject') || '';
+        const nextMessage = btn.getAttribute('data-message') || '';
+        if (nextSubject) {
+          subject.value = nextSubject;
+          toggleCustom();
+        }
+        if (nextCustom && customInput) {
+          customInput.value = nextCustom;
+        }
+        if (nextMessage && message && !message.value.trim()) {
+          message.value = nextMessage;
+        }
+        const firstEmpty = [name, email, message].find((x) => x && !x.value.trim());
+        (firstEmpty || message || subject).focus();
+        (firstEmpty || message || subject).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+  })();
+</script>
+{% endblock %}

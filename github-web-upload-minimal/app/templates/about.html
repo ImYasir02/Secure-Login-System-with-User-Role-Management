@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="about-readable about-hero rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-10">
+  <h1 class="text-3xl font-semibold tracking-tight text-black dark:text-slate-100">
+    {% if is_special_about_view %}
+      About Me
+    {% elif is_logged_in %}
+      {{ custom_about_title }}
+    {% else %}
+      About Me
+    {% endif %}
+  </h1>
+  <p class="mt-2 text-sm text-black dark:text-slate-200">
+    {% if is_special_about_view %}
+      Professional profile with public achievements, hall of fame, recognition, and certificate records.
+    {% elif is_logged_in %}
+      Your personal About page. Set your own title and manage your public records.
+    {% else %}
+      Professional profile and public records area.
+    {% endif %}
+  </p>
+</section>
+
+{% if is_logged_in and not is_special_about_view %}
+<section class="about-card about-title-settings mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
+  <h2 class="text-xl font-semibold text-black">Customize Your About Title</h2>
+  <form method="POST" action="{{ url_for('save_about_title') }}" class="mt-4 flex flex-col gap-3 sm:flex-row">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input id="aboutTitleInputPrimary" name="about_page_title" required maxlength="120" value="{{ custom_about_title }}"
+           placeholder="Enter your About page title"
+           class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+    <button type="submit" class="rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white">Save Title</button>
+  </form>
+  <div class="mt-3 flex flex-wrap gap-2">
+    {% set title_suggestions = [default_about_title_suggestion, 'My Portfolio', 'My Work', 'My Achievements', 'My Certificates'] %}
+    {% for suggestion in title_suggestions|unique %}
+      <button type="button"
+              class="about-title-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-black hover:bg-slate-100"
+              data-target="aboutTitleInputPrimary"
+              data-title-suggestion="{{ suggestion }}">
+        {{ suggestion }}
+      </button>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if is_logged_in %}
+<section class="about-card about-upload-card mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
+  <h2 class="text-xl font-semibold text-black">Upload Public Record</h2>
+  <form method="POST" action="{{ url_for('about_upload') }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input name="title" required maxlength="120" placeholder="Title / Name"
+           class="rounded-xl border border-slate-300 px-4 py-3 text-sm">
+    {% if is_special_about_view %}
+      <select name="category" class="rounded-xl border border-slate-300 px-4 py-3 text-sm">
+        <option value="hall_of_fame">Hall of Fame</option>
+        <option value="bug_bounty">Bug Bounty Findings</option>
+        <option value="recognition">Recognition</option>
+        <option value="certificate">Certificate</option>
+      </select>
+    {% else %}
+      <input type="hidden" name="category" value="other">
+      <div class="rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-700">
+        Category: <span class="font-semibold">Other (Your Custom About Section)</span>
+      </div>
+    {% endif %}
+    {% if is_logged_in and not is_special_about_view %}
+      <input id="aboutTitleInputUpload" name="about_page_title" maxlength="120" value="{{ custom_about_title }}"
+             placeholder="Your About Page Title (e.g. My Portfolio, My Work, My Achievements)"
+             class="md:col-span-2 rounded-xl border border-slate-300 px-4 py-3 text-sm">
+      <div class="md:col-span-2 flex flex-wrap gap-2">
+        {% set title_suggestions = [default_about_title_suggestion, 'My Portfolio', 'My Work', 'My Achievements', 'My Certificates'] %}
+        {% for suggestion in title_suggestions|unique %}
+          <button type="button"
+                  class="about-title-chip rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-black hover:bg-slate-100"
+                  data-target="aboutTitleInputUpload"
+                  data-title-suggestion="{{ suggestion }}">
+            {{ suggestion }}
+          </button>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <textarea name="description" required maxlength="2000" rows="3" placeholder="Description"
+              class="md:col-span-2 rounded-xl border border-slate-300 px-4 py-3 text-sm"></textarea>
+    <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png"
+           class="md:col-span-2 rounded-xl border border-slate-300 px-4 py-3 text-sm">
+    <button type="submit" class="md:col-span-2 rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white">Upload</button>
+  </form>
+</section>
+{% endif %}
+
+{% set labels = {'hall_of_fame':'Hall of Fame', 'bug_bounty':'Bug Bounty Findings', 'recognition':'Recognition', 'certificate':'Certificate'} %}
+{% if is_special_about_view %}
+{% for key in ['hall_of_fame', 'bug_bounty', 'recognition', 'certificate'] %}
+<section class="about-records-section mt-8">
+  <h2 class="text-2xl font-semibold tracking-tight text-black">{{ labels[key] }}</h2>
+  <div class="about-records-grid mt-3 grid gap-4 md:grid-cols-2">
+    {% for item in grouped_posts.get(key, []) %}
+      <article class="about-record-card rounded-3xl border border-slate-300 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-black">{{ item.title }}</h3>
+        <p class="mt-2 text-sm text-black">{{ item.description }}</p>
+        <p class="mt-3 text-xs text-slate-700">By: {{ user_map.get(item.uploaded_by, 'User') }} • Date: {{ item.created_at.strftime('%Y-%m-%d') }}</p>
+        {% if item.stored_filename and not item.stored_filename.startswith('removed_') %}
+          <a href="{{ url_for('serve_upload', post_id=item.id) }}" target="_blank" class="mt-3 inline-block rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-black hover:bg-slate-100">View Document</a>
+        {% else %}
+          <p class="mt-3 text-xs font-semibold text-rose-700">Document removed.</p>
+        {% endif %}
+        {% if is_logged_in and (item.uploaded_by == current_user.id or is_admin_owner) %}
+          <details class="mt-3 rounded-2xl border border-slate-300 p-3">
+            <summary class="cursor-pointer text-sm font-semibold text-black">Edit</summary>
+            <form method="POST" action="{{ url_for('edit_about_post', post_id=item.id) }}" enctype="multipart/form-data" class="mt-3 grid gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="text" name="title" value="{{ item.title }}" maxlength="120" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+              <select name="category" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                <option value="hall_of_fame" {% if item.category == 'hall_of_fame' %}selected{% endif %}>Hall of Fame</option>
+                <option value="bug_bounty" {% if item.category == 'bug_bounty' %}selected{% endif %}>Bug Bounty Findings</option>
+                <option value="recognition" {% if item.category == 'recognition' %}selected{% endif %}>Recognition</option>
+                <option value="certificate" {% if item.category == 'certificate' %}selected{% endif %}>Certificate</option>
+              </select>
+              <textarea name="description" maxlength="2000" rows="3" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">{{ item.description }}</textarea>
+              <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+              {% if item.stored_filename and not item.stored_filename.startswith('removed_') %}
+                <label class="inline-flex items-center gap-2 text-xs">
+                  <input type="checkbox" name="remove_file" class="h-3.5 w-3.5">
+                  Remove current document/photo
+                </label>
+              {% endif %}
+              <button type="submit" class="rounded-lg bg-black px-3 py-2 text-xs font-semibold text-white">Save</button>
+            </form>
+          </details>
+        {% endif %}
+      </article>
+    {% else %}
+      <div class="about-empty-state rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm">No records yet.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% elif is_logged_in %}
+<section class="about-records-section mt-8">
+  <h2 class="text-2xl font-semibold tracking-tight text-black">{{ custom_about_title }}</h2>
+  <div class="about-records-grid mt-3 grid gap-4 md:grid-cols-2">
+    {% for item in custom_about_posts %}
+      <article class="about-record-card rounded-3xl border border-slate-300 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-black">{{ item.title }}</h3>
+        <p class="mt-2 text-sm text-black">{{ item.description }}</p>
+        <p class="mt-3 text-xs text-slate-700">By: {{ user_map.get(item.uploaded_by, 'User') }} • Date: {{ item.created_at.strftime('%Y-%m-%d') }}</p>
+        {% if item.stored_filename and not item.stored_filename.startswith('removed_') %}
+          <a href="{{ url_for('serve_upload', post_id=item.id) }}" target="_blank" class="mt-3 inline-block rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-black hover:bg-slate-100">View Document</a>
+        {% else %}
+          <p class="mt-3 text-xs font-semibold text-rose-700">Document removed.</p>
+        {% endif %}
+        {% if item.uploaded_by == current_user.id or is_admin_owner %}
+          <details class="mt-3 rounded-2xl border border-slate-300 p-3">
+            <summary class="cursor-pointer text-sm font-semibold text-black">Edit</summary>
+            <form method="POST" action="{{ url_for('edit_about_post', post_id=item.id) }}" enctype="multipart/form-data" class="mt-3 grid gap-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="text" name="title" value="{{ item.title }}" maxlength="120" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+              <select name="category" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                <option value="hall_of_fame" {% if item.category == 'hall_of_fame' %}selected{% endif %}>Hall of Fame</option>
+                <option value="bug_bounty" {% if item.category == 'bug_bounty' %}selected{% endif %}>Bug Bounty Findings</option>
+                <option value="recognition" {% if item.category == 'recognition' %}selected{% endif %}>Recognition</option>
+                <option value="certificate" {% if item.category == 'certificate' %}selected{% endif %}>Certificate</option>
+              </select>
+              <textarea name="description" maxlength="2000" rows="3" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">{{ item.description }}</textarea>
+              <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+              {% if item.stored_filename and not item.stored_filename.startswith('removed_') %}
+                <label class="inline-flex items-center gap-2 text-xs">
+                  <input type="checkbox" name="remove_file" class="h-3.5 w-3.5">
+                  Remove current document/photo
+                </label>
+              {% endif %}
+              <button type="submit" class="rounded-lg bg-black px-3 py-2 text-xs font-semibold text-white">Save</button>
+            </form>
+          </details>
+        {% endif %}
+      </article>
+    {% else %}
+      <div class="about-empty-state rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm">
+        No records yet. Upload your public record above and set your own About title.
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+<script>
+  (function () {
+    const chips = document.querySelectorAll('.about-title-chip[data-title-suggestion]');
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const targetId = chip.getAttribute('data-target');
+        const suggestion = chip.getAttribute('data-title-suggestion') || '';
+        const input = targetId ? document.getElementById(targetId) : null;
+        if (!input) return;
+        input.value = suggestion;
+        input.focus();
+      });
+    });
+  })();
+</script>
+{% endblock %}

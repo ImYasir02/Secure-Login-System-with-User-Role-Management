@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+{% set is_mobile = layout == 'mobile' %}
+<section class="mx-auto {% if is_mobile %}max-w-md{% else %}max-w-6xl{% endif %} rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-cyan-200">PWA Preview</p>
+      <h1 class="mt-2 text-2xl font-semibold tracking-tight text-black dark:text-white">SecureLogin Vault</h1>
+      <p class="mt-2 text-sm text-slate-700 dark:text-white/75">
+        Screenshot-ready preview for PWA listing assets ({{ 'mobile' if is_mobile else 'wide' }} layout).
+      </p>
+    </div>
+    {% set vault_brand_size = 'md' %}
+    {% set vault_brand_show_text = true %}
+    {% set vault_brand_with_glow = true %}
+    {% set vault_brand_label = 'Secure Vault' %}
+    {% set vault_brand_subtitle = 'Screenshot Mode' %}
+    {% set vault_brand_classes = 'rounded-full border border-slate-300 bg-white px-2 py-1 dark:border-white/10 dark:bg-white/5' %}
+    {% include 'partials/vault_brand.html' %}
+  </div>
+
+  <div class="mt-6 grid gap-4 {% if is_mobile %}grid-cols-1{% else %}lg:grid-cols-[1.2fr_0.8fr]{% endif %}">
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-[#0d1438]">
+      <p class="text-xs font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-200">Workspace</p>
+      <h2 class="mt-1 text-xl font-semibold text-black dark:text-white">Goal, Document & Progress Support</h2>
+      <p class="mt-2 text-sm text-slate-700 dark:text-white/80">
+        Break goals into milestones, summarize notes, improve achievements, and track progress in a secure workspace.
+      </p>
+      <div class="mt-3 grid gap-2 {% if is_mobile %}grid-cols-1{% else %}sm:grid-cols-3{% endif %}">
+        <div class="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-white/10 dark:bg-white/5">Goal Planner</div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-white/10 dark:bg-white/5">Document Summary</div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-white/10 dark:bg-white/5">Roadmap Builder</div>
+      </div>
+      <div class="mt-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-sm font-semibold text-black dark:text-white">Progress Suggestions</p>
+          <span class="rounded-lg bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">Offline Preview</span>
+        </div>
+        <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-white/80">
+          <li>Milestones with weekly checkpoints</li>
+          <li>Suggested tools and learning order</li>
+          <li>Trackable progress plan</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <p class="text-xs uppercase tracking-wide text-slate-600 dark:text-cyan-200">Security</p>
+        <p class="mt-1 text-lg font-semibold text-black dark:text-white">Protected Routes + Usage Controls</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <p class="text-xs uppercase tracking-wide text-slate-600 dark:text-cyan-200">Analytics</p>
+        <p class="mt-1 text-lg font-semibold text-black dark:text-white">Feedback Rate, A/B Variants, Admin Insights</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <p class="text-xs uppercase tracking-wide text-slate-600 dark:text-cyan-200">Productivity</p>
+        <p class="mt-1 text-lg font-semibold text-black dark:text-white">Achievements + Goals + Documents in one place</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

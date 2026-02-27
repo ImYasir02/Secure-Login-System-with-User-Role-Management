@@ -1,14 +1,16 @@
-.env
-.env.*
-!.env.production.example
-__pycache__/
-*.pyc
-instance/*.db
-instance/uploads/
+# Virtual env
 venv/
 .venv/
 env/
-ENV/
+
+# Cache
+__pycache__/
+*.pyc
+
+# Local DB / secrets
 site.db
-*.sqlite3
-github-upload-ready.zip
+.env
+
+# OS / editor
+.DS_Store
+.vscode/

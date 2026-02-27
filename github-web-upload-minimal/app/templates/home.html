@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="home-readable home-hero relative overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-sm dark:border-white/10 dark:bg-[#080d28]">
+  <div class="pointer-events-none absolute inset-0 hidden dark:block">
+    <div class="absolute left-[-8%] top-[8%] h-64 w-64 rounded-full bg-blue-500/20 blur-3xl"></div>
+    <div class="absolute left-[28%] top-[20%] h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl"></div>
+    <div class="absolute right-[-10%] bottom-[-4%] h-80 w-80 rounded-full bg-fuchsia-500/20 blur-3xl"></div>
+    <div class="absolute inset-0 bg-[linear-gradient(115deg,rgba(8,13,40,0.95),rgba(15,20,63,0.92),rgba(9,12,33,0.96))]"></div>
+  </div>
+  <div class="relative grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.2fr_0.8fr]">
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-700 dark:text-pink-300">Home</p>
+      <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-700 dark:text-cyan-200">Secure Web Platform</p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight text-black sm:text-5xl dark:text-white">Securely Manage Your Achievements, Goals &amp; Important Documents</h1>
+      <p class="mt-6 max-w-3xl text-base leading-7 text-black dark:text-white/85">
+        This platform allows students and professionals to securely store verified achievements, upload supporting documents, and track goals in a clean professional timeline.
+      </p>
+      <p class="mt-3 text-sm font-semibold text-slate-700 dark:text-white/75">
+        Secure your documents. Track your goals. Celebrate your achievements.
+      </p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="{{ url_for('about') }}" class="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500 dark:shadow-[0_8px_24px_rgba(79,70,229,0.35)] dark:hover:brightness-110">About Me</a>
+        <a href="{{ url_for('achievements') }}" class="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Achievements</a>
+        <a href="{{ url_for('goals') }}" class="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Goals</a>
+        {% if not is_logged_in %}
+          <a href="{{ url_for('register') }}" class="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Create Account</a>
+        {% endif %}
+        {% if is_logged_in %}
+          <a href="{{ url_for(panel_endpoint) }}" class="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+            {% if is_admin_owner %}Owner Panel{% else %}User Panel{% endif %}
+          </a>
+        {% endif %}
+      </div>
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <a href="{{ social_x_url }}" target="_blank" rel="noopener" aria-label="Open X (Twitter)" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-4 w-4 fill-current"><path d="M18.9 2H22l-6.77 7.74L23.2 22h-6.25l-4.9-6.42L6.43 22H3.3l7.24-8.28L1 2h6.4l4.43 5.86L18.9 2zm-1.1 18h1.73L6.45 3.9H4.6L17.8 20z"/></svg>
+          <span>X</span>
+        </a>
+        <a href="{{ social_linkedin_url }}" target="_blank" rel="noopener" aria-label="Open LinkedIn" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-4 w-4 fill-current"><path d="M6.94 8.5A1.56 1.56 0 1 1 6.94 5.4a1.56 1.56 0 0 1 0 3.1zM5.6 9.75h2.67V18H5.6V9.75zm4.35 0h2.56v1.13h.04c.36-.68 1.22-1.39 2.5-1.39 2.67 0 3.16 1.76 3.16 4.06V18h-2.67v-3.95c0-.94-.02-2.15-1.31-2.15-1.31 0-1.51 1.02-1.51 2.08V18H9.95V9.75z"/></svg>
+          <span>LinkedIn</span>
+        </a>
+        <a href="{{ social_github_url }}" target="_blank" rel="noopener" aria-label="Open GitHub" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-4 w-4 fill-current"><path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.41-4.04-1.41-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.66 1.65.25 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.62-2.81 5.64-5.49 5.94.43.38.82 1.1.82 2.22v3.29c0 .32.21.7.83.58A12 12 0 0 0 12 .5z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="grid gap-3">
+      <div class="rounded-2xl border border-slate-300 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <p class="text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Public Use</p>
+        <p class="mt-1 text-xl font-semibold text-black dark:text-white">Easy Achievement Timeline</p>
+        <p class="mt-2 text-sm text-slate-600 dark:text-white/70">Keep certificates, records, and milestones organized in one place.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-300 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <p class="text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Goal Tracking</p>
+        <p class="mt-1 text-xl font-semibold text-black dark:text-white">Milestones with Date &amp; Details</p>
+        <p class="mt-2 text-sm text-slate-600 dark:text-white/70">Track progress with clear status, notes, and due dates.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-300 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <p class="text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Security</p>
+        <p class="mt-1 text-xl font-semibold text-black dark:text-white">Secure Document Upload</p>
+        <p class="mt-2 text-sm text-slate-600 dark:text-white/70">Safer defaults and upload validation for your important files.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-readable home-benefits mt-8 overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <div class="p-6 sm:p-8">
+    <h2 class="text-2xl font-semibold tracking-tight text-black dark:text-white">Why This Platform Works Better</h2>
+    <ul class="mt-4 grid gap-3 text-sm text-black sm:grid-cols-2 dark:text-white/90">
+      <li class="rounded-xl border border-slate-300 bg-white p-3 dark:border-white/10 dark:bg-white/5">Secure document vault for important proofs and certificates</li>
+      <li class="rounded-xl border border-slate-300 bg-white p-3 dark:border-white/10 dark:bg-white/5">Encrypted uploads with safer defaults and validation</li>
+      <li class="rounded-xl border border-slate-300 bg-white p-3 dark:border-white/10 dark:bg-white/5">Goal tracking with milestones, deadlines, and progress notes</li>
+      <li class="rounded-xl border border-slate-300 bg-white p-3 dark:border-white/10 dark:bg-white/5">Achievement timeline to keep your work organized and visible</li>
+      <li class="rounded-xl border border-slate-300 bg-white p-3 sm:col-span-2 dark:border-white/10 dark:bg-white/5">Privacy-first design with clean workflows for students and professionals</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

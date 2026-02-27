@@ -1,0 +1,7 @@
+GitHub web upload quick steps:
+1) Open your GitHub repository in browser.
+2) Upload only the contents of this folder (not your full project root).
+3) Then on server/machine run:
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt

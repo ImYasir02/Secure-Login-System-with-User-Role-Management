@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="user-management-page relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8 dark:border-white/10 dark:bg-[#080d28]">
+  <div class="pointer-events-none absolute inset-0 hidden dark:block">
+    <div class="absolute left-[-8%] top-[6%] h-56 w-56 rounded-full bg-blue-500/18 blur-3xl"></div>
+    <div class="absolute right-[-8%] top-[18%] h-64 w-64 rounded-full bg-fuchsia-500/14 blur-3xl"></div>
+  </div>
+  <div class="relative">
+  <div class="user-management-header flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Administration</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-tight">User Management</h1>
+      <p class="mt-2 text-sm text-slate-600">Owner has full control. Admin can manage users except owner accounts.</p>
+    </div>
+    <a href="{{ url_for('owner_panel') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Back to Owner Panel</a>
+  </div>
+
+  <div id="add-user" class="user-management-add mt-6 rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+    <h2 class="text-lg font-semibold tracking-tight">Add User</h2>
+    <form method="POST" class="user-management-add-form mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="create">
+      <input name="username" required maxlength="80" placeholder="Username" class="rounded-xl border border-slate-300 bg-transparent px-3 py-2 text-sm focus:border-black focus:outline-none">
+      <input name="email" required type="email" maxlength="120" placeholder="Email" class="rounded-xl border border-slate-300 bg-transparent px-3 py-2 text-sm focus:border-black focus:outline-none">
+      <input name="password" required type="password" minlength="8" placeholder="Password" class="rounded-xl border border-slate-300 bg-transparent px-3 py-2 text-sm focus:border-black focus:outline-none">
+      <select name="role" class="rounded-xl border border-slate-300 bg-transparent px-3 py-2 text-sm focus:border-black focus:outline-none">
+        <option value="user">user</option>
+        <option value="admin">admin</option>
+        {% if is_owner %}<option value="owner">owner</option>{% endif %}
+      </select>
+      <button type="submit" class="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500">Create User</button>
+    </form>
+  </div>
+</div>
+</section>
+
+<section id="user-list" class="user-management-list mt-6 rounded-3xl border border-slate-300 bg-white p-4 shadow-sm sm:p-6 dark:border-white/10 dark:bg-[#0b112f]">
+  <div class="user-management-list-toolbar sticky top-24 z-20 -mx-1 mb-1 rounded-2xl border border-slate-200 bg-white/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:border-white/10 dark:bg-[#0b112f]/90 sm:px-3">
+  <div class="flex flex-col gap-2.5">
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="text-lg font-semibold tracking-tight sm:text-xl">Users List</h2>
+      <span class="text-[10px] uppercase tracking-wide text-slate-500 sm:text-xs">Responsive View</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <label class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold dark:border-white/15">
+        <input id="selectAllUsers" type="checkbox" class="h-4 w-4 rounded border-slate-300">
+        Select All
+      </label>
+      <form id="bulkUserActionForm" method="POST" class="flex w-full items-center gap-1.5 rounded-xl border border-slate-300 bg-white p-1 dark:border-white/15 dark:bg-white/5 sm:w-auto sm:flex-wrap sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0" onsubmit="return handleBulkUserActionSubmit(event);">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="bulk">
+        <select name="bulk_action" required class="min-w-0 flex-1 rounded-lg border-0 bg-transparent px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-0 dark:text-white sm:min-w-[12rem] sm:flex-none sm:border sm:border-slate-300 sm:bg-transparent dark:sm:border-white/15">
+          <option value="">Bulk Action</option>
+          <option value="activate">Activate Selected</option>
+          <option value="deactivate">Deactivate Selected</option>
+          <option value="set_role_user">Change Role to user</option>
+          <option value="set_role_admin">Change Role to admin</option>
+          <option value="delete">Delete Selected</option>
+        </select>
+        <button id="bulkApplyButton" type="submit" disabled class="shrink-0 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500">Apply</button>
+      </form>
+      <button id="bulkClearSelection" type="button" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:hover:bg-white/10" aria-label="Clear Selection" title="Clear Selection">
+        <span class="sm:hidden" aria-hidden="true">✕</span>
+        <span class="hidden sm:inline">Clear Selection</span>
+      </button>
+      <span id="bulkSelectedCount" class="order-10 text-xs font-semibold text-slate-600 dark:text-white/75 sm:order-none">0 selected</span>
+      <span id="bulkSelectedPreview" class="order-10 basis-full truncate text-xs text-slate-500 dark:text-white/60 sm:order-none sm:basis-auto sm:max-w-[22rem]">No users selected</span>
+      {% if bulk_result %}
+        {% set bulk_is_mixed = bulk_result.applied > 0 and bulk_result.skipped > 0 %}
+        {% set bulk_is_success = bulk_result.applied > 0 and bulk_result.skipped == 0 %}
+        {% set bulk_is_skipped_only = bulk_result.applied == 0 and bulk_result.skipped > 0 %}
+        <span class="order-10 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold sm:order-none
+          {% if bulk_is_success %}
+            border border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200
+          {% elif bulk_is_skipped_only %}
+            border border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200
+          {% elif bulk_is_mixed %}
+            border border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-200
+          {% else %}
+            border border-slate-300 bg-slate-50 text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-white/80
+          {% endif %}
+        ">
+          <span aria-hidden="true">
+            {% if bulk_is_success %}✓{% elif bulk_is_skipped_only %}!{% elif bulk_is_mixed %}↻{% else %}•{% endif %}
+          </span>
+          Applied: {{ bulk_result.action }} to {{ bulk_result.applied }} user{{ '' if bulk_result.applied == 1 else 's' }}
+          {% if bulk_result.skipped %}
+            <span class="{% if bulk_is_success %}text-emerald-600/80 dark:text-emerald-200/70{% elif bulk_is_skipped_only %}text-amber-600/80 dark:text-amber-200/70{% elif bulk_is_mixed %}text-indigo-600/80 dark:text-indigo-200/70{% else %}text-slate-500 dark:text-white/60{% endif %}">(skipped {{ bulk_result.skipped }})</span>
+          {% endif %}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+  </div>
+
+  <div class="user-management-mobile-list mt-4 space-y-3 md:hidden">
+    {% for u in users %}
+      <article data-selectable-row class="rounded-2xl border border-slate-300 p-4 transition dark:border-white/10 dark:bg-white/5">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2">
+            <input
+              type="checkbox"
+              class="bulk-user-checkbox mt-0.5 h-4 w-4 rounded border-slate-300"
+              form="bulkUserActionForm"
+              name="selected_user_ids"
+              value="{{ u.id }}"
+              data-username="{{ u.username }}"
+              aria-label="Select {{ u.username }}"
+            >
+            <div>
+              <p class="font-semibold">{{ u.username }}</p>
+              <p class="text-xs text-slate-500">{{ u.email }}</p>
+            </div>
+          </div>
+          <span class="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] font-semibold uppercase">{{ u.role }}</span>
+        </div>
+
+        <p class="mt-2 text-xs">
+          {% if u.is_active_user %}
+            <span class="font-semibold">Status:</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+              <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+              Active
+            </span>
+          {% else %}
+            <span class="font-semibold">Status:</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 font-semibold text-rose-700">
+              <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+              Inactive
+            </span>
+          {% endif %}
+        </p>
+
+        <form method="POST" class="mt-3 space-y-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="update">
+          <input type="hidden" name="user_id" value="{{ u.id }}">
+          <input name="username" value="{{ u.username }}" maxlength="80" class="w-full rounded-lg border border-slate-300 bg-transparent px-2 py-1.5 text-xs">
+          <div class="flex gap-2">
+            <select name="role" class="w-full rounded-lg border border-slate-300 bg-transparent px-2 py-1.5 text-xs">
+              <option value="user" {% if u.role == 'user' %}selected{% endif %}>user</option>
+              <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>admin</option>
+              {% if is_owner %}<option value="owner" {% if u.role == 'owner' %}selected{% endif %}>owner</option>{% endif %}
+            </select>
+            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold">Save</button>
+          </div>
+        </form>
+
+        <div class="mt-3 flex gap-2">
+          <form method="POST" class="flex-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="toggle_active">
+            <input type="hidden" name="user_id" value="{{ u.id }}">
+            <button type="submit" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold">
+              {% if u.is_active_user %}Deactivate{% else %}Activate{% endif %}
+            </button>
+          </form>
+          <form method="POST" class="flex-1" onsubmit="return confirm('Delete this user?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="user_id" value="{{ u.id }}">
+            <button type="submit" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold">Delete</button>
+          </form>
+        </div>
+      </article>
+    {% else %}
+      <div class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-white/15 dark:text-white/70">No users found.</div>
+    {% endfor %}
+  </div>
+
+  <div class="user-management-table-wrap mt-4 hidden overflow-x-auto rounded-2xl border border-slate-300 dark:border-white/10 md:block">
+    <table class="w-full min-w-[900px] text-sm">
+      <thead class="bg-slate-100 dark:bg-white/5">
+        <tr>
+          <th class="px-3 py-3 text-left font-semibold">Select</th>
+          <th class="px-3 py-3 text-left font-semibold">User</th>
+          <th class="px-3 py-3 text-left font-semibold">Edit Role & Name</th>
+          <th class="px-3 py-3 text-left font-semibold">Status</th>
+          <th class="px-3 py-3 text-left font-semibold">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr data-selectable-row class="border-t border-slate-300 transition dark:border-white/10">
+            <td class="px-3 py-3 align-top">
+              <input
+                type="checkbox"
+                class="bulk-user-checkbox mt-1 h-4 w-4 rounded border-slate-300"
+                form="bulkUserActionForm"
+                name="selected_user_ids"
+                value="{{ u.id }}"
+                data-username="{{ u.username }}"
+                aria-label="Select {{ u.username }}"
+              >
+            </td>
+            <td class="px-3 py-3 align-top">
+              <div class="font-semibold">{{ u.username }}</div>
+              <div class="text-xs text-slate-500">{{ u.email }}</div>
+            </td>
+            <td class="px-3 py-3 align-top">
+              <form method="POST" class="flex items-center gap-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <input name="username" value="{{ u.username }}" maxlength="80" class="w-36 rounded-lg border border-slate-300 bg-transparent px-2 py-1.5 text-xs">
+                <select name="role" class="rounded-lg border border-slate-300 bg-transparent px-2 py-1.5 text-xs">
+                  <option value="user" {% if u.role == 'user' %}selected{% endif %}>user</option>
+                  <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>admin</option>
+                  {% if is_owner %}<option value="owner" {% if u.role == 'owner' %}selected{% endif %}>owner</option>{% endif %}
+                </select>
+                <button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Save</button>
+              </form>
+            </td>
+            <td class="px-3 py-3 align-top">
+              {% if u.is_active_user %}
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase text-emerald-700">
+                  <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  Active
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold uppercase text-rose-700">
+                  <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+                  Inactive
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-3 py-3 align-top">
+              <div class="flex items-center gap-2">
+                <form method="POST">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="toggle_active">
+                  <input type="hidden" name="user_id" value="{{ u.id }}">
+                  <button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">
+                    {% if u.is_active_user %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+                <form method="POST" onsubmit="return confirm('Delete this user?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="user_id" value="{{ u.id }}">
+                  <button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="5" class="px-3 py-10 text-center text-sm text-slate-500 dark:text-white/70">No users found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<script>
+  (function () {
+    const selectionStorageKey = 'userManagement:selectedUserIds';
+    const selectAll = document.getElementById('selectAllUsers');
+    const checkboxes = Array.from(document.querySelectorAll('.bulk-user-checkbox'));
+    const bulkForm = document.getElementById('bulkUserActionForm');
+    const selectedCountEl = document.getElementById('bulkSelectedCount');
+    const selectedPreviewEl = document.getElementById('bulkSelectedPreview');
+    const bulkApplyButton = document.getElementById('bulkApplyButton');
+    const bulkClearSelection = document.getElementById('bulkClearSelection');
+    const actionField = bulkForm ? bulkForm.querySelector('select[name="bulk_action"]') : null;
+
+    function getUserId(checkbox) {
+      return String(checkbox?.value || '');
+    }
+
+    function getCheckboxesForUser(userId) {
+      const id = String(userId || '');
+      return checkboxes.filter((cb) => getUserId(cb) === id);
+    }
+
+    function getSelectedUniqueIds() {
+      return Array.from(new Set(checkboxes.filter((cb) => cb.checked).map((cb) => getUserId(cb))));
+    }
+
+    function getSelectedUserSummaries() {
+      const seen = new Set();
+      const result = [];
+      checkboxes.forEach((cb) => {
+        if (!cb.checked) return;
+        const id = getUserId(cb);
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        result.push({
+          id,
+          name: cb.getAttribute('data-username') || 'User',
+        });
+      });
+      return result;
+    }
+
+    function updateSelectedCount() {
+      const selected = getSelectedUserSummaries();
+      const count = selected.length;
+      if (selectedCountEl) {
+        selectedCountEl.textContent = `${count} selected`;
+      }
+      if (selectedPreviewEl) {
+        if (count === 0) {
+          selectedPreviewEl.textContent = 'No users selected';
+        } else {
+          const names = selected.map((x) => x.name);
+          const preview = names.slice(0, 3).join(', ');
+          const extra = names.length > 3 ? ` +${names.length - 3} more` : '';
+          selectedPreviewEl.textContent = preview + extra;
+        }
+      }
+      return count;
+    }
+
+    function readStoredSelection() {
+      try {
+        const raw = localStorage.getItem(selectionStorageKey);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function persistSelection() {
+      try {
+        const ids = getSelectedUniqueIds();
+        if (ids.length === 0) {
+          localStorage.removeItem(selectionStorageKey);
+          return;
+        }
+        localStorage.setItem(selectionStorageKey, JSON.stringify(ids));
+      } catch (_) {
+        // Ignore storage errors (private mode/quota)
+      }
+    }
+
+    function restoreSelectionFromStorage() {
+      const stored = new Set(readStoredSelection());
+      if (stored.size === 0) return;
+      checkboxes.forEach((cb) => {
+        cb.checked = stored.has(String(cb.value));
+      });
+    }
+
+    function updateRowHighlight(checkbox) {
+      if (!checkbox) return;
+      const row = checkbox.closest('[data-selectable-row]');
+      if (!row) return;
+      const selected = checkbox.checked;
+      if (row.tagName === 'TR') {
+        row.classList.toggle('bg-slate-100', selected);
+        row.classList.toggle('dark:bg-white/10', selected);
+      } else {
+        row.classList.toggle('bg-slate-50', selected);
+        row.classList.toggle('border-black', selected);
+        row.classList.toggle('dark:bg-white/10', selected);
+      }
+    }
+
+    function refreshAllRowHighlights() {
+      checkboxes.forEach(updateRowHighlight);
+    }
+
+    function syncSelectAllState() {
+      if (!selectAll) return;
+      const groupedIds = Array.from(new Set(checkboxes.map((x) => getUserId(x)).filter(Boolean)));
+      const allChecked = groupedIds.length > 0 && groupedIds.every((id) => getCheckboxesForUser(id).every((cb) => cb.checked));
+      const someChecked = groupedIds.some((id) => getCheckboxesForUser(id).some((cb) => cb.checked));
+      selectAll.checked = allChecked;
+      selectAll.indeterminate = someChecked && !allChecked;
+    }
+
+    function updateBulkApplyState() {
+      const selectedCount = getSelectedUniqueIds().length;
+      const hasAction = !!(actionField && actionField.value);
+      if (bulkApplyButton) {
+        bulkApplyButton.disabled = !(selectedCount > 0 && hasAction);
+      }
+    }
+
+    if (selectAll) {
+      selectAll.addEventListener('change', () => {
+        checkboxes.forEach((cb) => { cb.checked = selectAll.checked; });
+        updateSelectedCount();
+        refreshAllRowHighlights();
+        updateBulkApplyState();
+        persistSelection();
+      });
+    }
+
+    checkboxes.forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const userId = getUserId(cb);
+        getCheckboxesForUser(userId).forEach((peer) => {
+          peer.checked = cb.checked;
+        });
+        syncSelectAllState();
+        updateSelectedCount();
+        getCheckboxesForUser(userId).forEach(updateRowHighlight);
+        updateBulkApplyState();
+        persistSelection();
+      });
+    });
+
+    if (actionField) {
+      actionField.addEventListener('change', updateBulkApplyState);
+    }
+
+    if (bulkClearSelection) {
+      bulkClearSelection.addEventListener('click', () => {
+        checkboxes.forEach((cb) => { cb.checked = false; });
+        if (selectAll) {
+          selectAll.checked = false;
+          selectAll.indeterminate = false;
+        }
+        updateSelectedCount();
+        refreshAllRowHighlights();
+        updateBulkApplyState();
+        persistSelection();
+      });
+    }
+
+    if (bulkForm) {
+      bulkForm.addEventListener('submit', () => {
+        persistSelection();
+      });
+    }
+
+    restoreSelectionFromStorage();
+    syncSelectAllState();
+    updateSelectedCount();
+    refreshAllRowHighlights();
+    updateBulkApplyState();
+
+    window.handleBulkUserActionSubmit = function (event) {
+      if (!bulkForm) return true;
+      const selected = checkboxes.filter((cb) => cb.checked);
+      const selectedUnique = getSelectedUserSummaries();
+      if (!actionField || !actionField.value) {
+        event.preventDefault();
+        alert('Please select a bulk action.');
+        return false;
+      }
+      if (selectedUnique.length === 0) {
+        event.preventDefault();
+        alert('Please select at least one user.');
+        return false;
+      }
+      if (actionField.value === 'delete') {
+        const ok = confirm(`Delete ${selectedUnique.length} selected user(s)?`);
+        if (!ok) {
+          event.preventDefault();
+          return false;
+        }
+      }
+      return true;
+    };
+  })();
+</script>
+{% endblock %}

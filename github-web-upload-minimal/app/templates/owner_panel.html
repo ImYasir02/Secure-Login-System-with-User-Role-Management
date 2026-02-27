@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="owner-panel-page relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8 dark:border-white/10 dark:bg-[#080d28]">
+  <div class="pointer-events-none absolute inset-0 hidden dark:block">
+    <div class="absolute left-[-10%] top-[4%] h-56 w-56 rounded-full bg-blue-500/18 blur-3xl"></div>
+    <div class="absolute right-[-8%] top-[18%] h-64 w-64 rounded-full bg-fuchsia-500/14 blur-3xl"></div>
+  </div>
+  <div class="relative">
+  <div class="owner-panel-header flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600">Admin / Owner</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black">Owner Panel</h1>
+      <p class="mt-2 text-sm text-slate-700">Centralized control for user administration and incoming contact workflow.</p>
+    </div>
+    <a href="{{ url_for('user_management') }}" class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">Open User Management</a>
+  </div>
+
+  <div class="owner-panel-stats mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl border border-slate-300 p-5 dark:border-white/10 dark:bg-white/5">
+      <p class="text-xs uppercase tracking-wide text-slate-600">Total Users</p>
+      <p class="mt-2 text-3xl font-semibold text-black">{{ total_users }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-300 p-5 dark:border-white/10 dark:bg-white/5">
+      <p class="text-xs uppercase tracking-wide text-slate-600">Active Users</p>
+      <p class="mt-2 text-3xl font-semibold text-black">{{ active_users }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-300 p-5 dark:border-white/10 dark:bg-white/5">
+      <p class="text-xs uppercase tracking-wide text-slate-600">Contact Messages</p>
+      <p class="mt-2 text-3xl font-semibold text-black">{{ total_messages }}</p>
+    </div>
+    <div class="rounded-2xl border border-rose-300 p-5 dark:border-rose-400/40 dark:bg-rose-500/10">
+      <p class="text-xs uppercase tracking-wide text-rose-700 dark:text-rose-300">Vault Lockouts (7d)</p>
+      <p class="mt-2 text-3xl font-semibold text-rose-700 dark:text-rose-200">{{ lockout_7d_count }}</p>
+      <p class="mt-1 text-[11px] text-rose-600 dark:text-rose-300/90">Today: {{ lockout_today_count }}</p>
+    </div>
+  </div>
+
+  <div class="owner-panel-actions mt-5 flex flex-wrap gap-3">
+    <a href="{{ url_for('user_management') }}#add-user" class="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500">Add User</a>
+    <a href="{{ url_for('user_management') }}#user-list" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Delete User</a>
+  </div>
+  </div>
+</section>
+
+<section class="owner-panel-links mt-6 grid gap-4 md:grid-cols-2">
+  <a href="{{ url_for('user_management') }}" class="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-black hover:bg-slate-50 dark:border-white/10 dark:bg-[#0b112f] dark:hover:border-white/20 dark:hover:bg-white/5">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Control Center</p>
+    <h2 class="mt-2 text-xl font-semibold tracking-tight text-black">User Management</h2>
+    <p class="mt-2 text-sm text-slate-700">Add, edit, activate/deactivate, change role, and delete users with access control.</p>
+  </a>
+
+  <a href="{{ url_for('messages_view_alias') }}" class="rounded-3xl border border-slate-300 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-black hover:bg-slate-50 dark:border-white/10 dark:bg-[#0b112f] dark:hover:border-white/20 dark:hover:bg-white/5">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Inbox</p>
+    <h2 class="mt-2 text-xl font-semibold tracking-tight text-black">Messages View</h2>
+    <p class="mt-2 text-sm text-slate-700">Review and monitor all Contact Us form submissions from one place.</p>
+  </a>
+</section>
+
+<section class="owner-panel-audit mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <div class="owner-panel-audit-toolbar flex items-center justify-between gap-3">
+    <h2 class="text-xl font-semibold tracking-tight text-black">Deleted By Admin Audit</h2>
+    <form method="GET" class="flex items-center gap-2">
+      <input type="hidden" name="lockout_range" value="{{ lockout_range }}">
+      <select name="audit_range" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <option value="today" {% if audit_range == 'today' %}selected{% endif %}>Today</option>
+        <option value="7d" {% if audit_range == '7d' %}selected{% endif %}>Last 7 Days</option>
+        <option value="all" {% if audit_range == 'all' %}selected{% endif %}>All</option>
+      </select>
+      <button type="submit" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Apply</button>
+    </form>
+  </div>
+  <div class="owner-panel-audit-list mt-4 space-y-3">
+    {% for item in deletion_audit %}
+      <article class="owner-panel-audit-item rounded-2xl border border-slate-300 p-4 dark:border-white/10 dark:bg-white/5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-sm font-semibold text-black">{{ item.actor_name }}</p>
+          <span class="text-xs text-slate-500">{{ item.created_at.strftime('%Y-%m-%d %H:%M UTC') if item.created_at else 'n/a' }}</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-600">{{ item.event_type }}</p>
+        <p class="mt-2 text-sm text-slate-700">{{ item.details or 'Delete-related action logged.' }}</p>
+        <p class="mt-1 text-[11px] text-slate-500">IP: {{ item.ip_address }}</p>
+      </article>
+    {% else %}
+      <div class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-white/15 dark:text-white/70">
+        No delete audit events yet.
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="owner-panel-audit mt-6 rounded-3xl border border-rose-300 bg-white p-6 shadow-sm dark:border-rose-400/40 dark:bg-[#0b112f]">
+  <div class="owner-panel-audit-toolbar flex items-center justify-between gap-3">
+    <h2 class="text-xl font-semibold tracking-tight text-black">Vault Lockout Analytics</h2>
+    <form method="GET" class="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="audit_range" value="{{ audit_range }}">
+      <select name="lockout_range" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold dark:border-white/15 dark:bg-white/5 dark:text-white">
+        <option value="today" {% if lockout_range == 'today' %}selected{% endif %}>Today</option>
+        <option value="7d" {% if lockout_range == '7d' %}selected{% endif %}>Last 7 Days</option>
+        <option value="all" {% if lockout_range == 'all' %}selected{% endif %}>All</option>
+      </select>
+      <button type="submit" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Apply</button>
+      <button type="submit" name="export" value="lockout_csv" class="rounded-xl border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-400/40 dark:text-rose-300 dark:hover:bg-rose-500/10">Export CSV</button>
+    </form>
+  </div>
+  <div class="owner-panel-audit-list mt-4 space-y-3">
+    {% for item in lockout_feed %}
+      <article class="owner-panel-audit-item rounded-2xl border border-rose-300 p-4 dark:border-rose-400/40 dark:bg-rose-500/10">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-sm font-semibold text-black">{{ item.actor_name }}</p>
+          <span class="text-xs text-slate-500">{{ item.created_at.strftime('%Y-%m-%d %H:%M UTC') if item.created_at else 'n/a' }}</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-600">{{ item.event_type }}</p>
+        <p class="mt-2 text-sm text-slate-700">{{ item.details }}</p>
+        <p class="mt-1 text-[11px] text-slate-500">IP: {{ item.ip_address }}</p>
+      </article>
+    {% else %}
+      <div class="rounded-2xl border border-dashed border-rose-300 p-8 text-center text-sm text-slate-500 dark:border-rose-400/40 dark:text-white/70">
+        No vault lockout events yet.
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
