@@ -17,8 +17,11 @@ __pycache__/
 # =========================
 site.db
 *.db
+.db-journal
 .env
 *.sqlite3
+instance/*.db
+instance/uploads/
 
 # =========================
 # Logs
