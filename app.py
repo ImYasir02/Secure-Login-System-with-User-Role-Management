@@ -425,6 +425,12 @@ def normalize_role(role):
     return value if value in ALLOWED_ROLES else "user"
 
 
+def flash_notice(code, message, level="info"):
+    label = sanitize_text(code, 80) or "notice"
+    detail = sanitize_text(message, 500, multiline=True) or ""
+    flash(f"{label}: {detail}" if detail else label, level)
+
+
 def default_about_title_for_user(user):
     if not user:
         return "My Portfolio"
@@ -461,8 +467,8 @@ def is_admin_or_owner():
 def get_panel_endpoint(user_obj):
     role = normalize_role(getattr(user_obj, "role", "user"))
     if role in {"owner", "admin"}:
-        return "owner_panel"
-    return "dashboard"
+        return "admin_dashboard"
+    return "user_dashboard"
 
 
 def role_required(*roles):
@@ -475,8 +481,12 @@ def role_required(*roles):
                 return login_manager.unauthorized()
 
             if normalize_role(current_user.role) not in allowed:
-                flash("You do not have permission to access this page.", "error")
-                return redirect(url_for("dashboard"))
+                flash_notice(
+                    "rbac_access_denied",
+                    "You do not have permission to access this page.",
+                    "error",
+                )
+                return redirect(url_for(get_panel_endpoint(current_user)))
 
             return func(*args, **kwargs)
 
@@ -1719,24 +1729,6 @@ def api_auth_logout():
     return jsonify({"ok": True, "message": "Logged out. Tokens revoked."})
 
 
-def bootstrap_owner_if_needed(username, email, password):
-    owner = User.query.filter_by(role="owner").first()
-    if owner:
-        return None
-
-    pw_hash = bcrypt.generate_password_hash(password).decode("utf-8")
-    first_owner = User(
-        username=username,
-        email=email,
-        password_hash=pw_hash,
-        role="owner",
-        is_active_user=True,
-    )
-    db.session.add(first_owner)
-    db.session.commit()
-    return first_owner
-
-
 def ensure_schema_compatibility():
     inspector = inspect(db.engine)
     tables = set(inspector.get_table_names())
@@ -1896,6 +1888,23 @@ def ensure_schema_compatibility():
     with db.engine.begin() as conn:
         conn.execute(text("UPDATE user SET role = lower(role) WHERE role IS NOT NULL"))
         conn.execute(text("UPDATE user SET role = 'user' WHERE role IS NULL OR role = ''"))
+
+
+_runtime_setup_done = False
+
+
+def ensure_runtime_setup():
+    global _runtime_setup_done
+    if _runtime_setup_done:
+        return
+    with app.app_context():
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+        db.create_all()
+        ensure_schema_compatibility()
+    _runtime_setup_done = True
+
+
+ensure_runtime_setup()
 
 
 @app.before_request
@@ -2459,7 +2468,6 @@ def register():
         password = request.form.get("password") or ""
         confirm_password = request.form.get("confirm_password") or ""
         selected_role = normalize_role(request.form.get("role"))
-        admin_signup_key = sanitize_text(request.form.get("admin_signup_key"), 120)
         accept_terms = request.form.get("accept_terms") == "on"
 
         if not username or not email or not password or not confirm_password:
@@ -2482,25 +2490,9 @@ def register():
             flash("Please accept Terms and Privacy Policy.", "error")
             return redirect(url_for("register"))
 
-        if selected_role == "admin":
-            configured_admin_key = app.config.get("ADMIN_SIGNUP_KEY", "")
-            if not configured_admin_key:
-                flash("Admin signup is currently disabled. Use normal signup or contact the site owner.", "error")
-                return redirect(url_for("register"))
-            if admin_signup_key != configured_admin_key:
-                flash("Invalid admin signup key.", "error")
-                return redirect(url_for("register"))
-
         existing = User.query.filter_by(email=email).first()
         if existing:
             flash("Email already registered. Please login.", "error")
-            return redirect(url_for("login"))
-
-        first_owner = bootstrap_owner_if_needed(username, email, password)
-        if first_owner:
-            first_owner.is_email_verified = True
-            db.session.commit()
-            flash("Owner account created (first account bootstrap). Please login.", "success")
             return redirect(url_for("login"))
 
         pw_hash = bcrypt.generate_password_hash(password).decode("utf-8")
@@ -2517,14 +2509,18 @@ def register():
 
         verify_token = generate_email_verify_token(user.email)
         session["dev_verify_link"] = url_for("verify_email", token=verify_token)
-        flash("Account created. Please verify your email before login.", "success")
+        log_activity("registration_success", f"self signup role={user.role}", user_id=user.id)
+        flash_notice(
+            "registration_success",
+            "Account created. db_users_table updated and password_hash stored securely. Please verify your email before login.",
+            "success",
+        )
         return redirect(url_for("register"))
 
     verify_url = session.pop("dev_verify_link", None)
     return render_template(
         "register.html",
         verify_url=verify_url,
-        admin_signup_enabled=bool(app.config.get("ADMIN_SIGNUP_KEY", "")),
         **ctx("Signup"),
     )
 
@@ -2608,7 +2604,7 @@ def login():
             return redirect(url_for("login"))
 
         if len(password) < 8:
-            flash("Invalid credentials.", "error")
+            flash_notice("login_invalid", "Invalid credentials.", "error")
             return redirect(url_for("login"))
 
         if login_rate_limited(email, ip_address):
@@ -2632,7 +2628,7 @@ def login():
                 log_activity("login_failed", "wrong password", user_id=user.id)
             else:
                 log_activity("login_failed", f"unknown email={email}")
-            flash("Invalid credentials.", "error")
+            flash_notice("login_invalid", "Invalid credentials.", "error")
             return redirect(url_for("login"))
 
         if not user.is_active_user:
@@ -2653,14 +2649,18 @@ def login():
 
         if otp_required(user):
             session["pending_2fa_user"] = user.id
-            flash("Enter your 2FA code to complete login.", "success")
+            flash_notice("login_success", "Primary credentials verified. Enter your 2FA code to complete login.", "success")
             return redirect(url_for("login_2fa"))
 
         login_user(user)
         session["session_version"] = user.session_version
         log_activity("login_success", user_id=user.id)
-        flash("Login successful.", "success")
-        return redirect(url_for("dashboard"))
+        flash_notice(
+            "login_success",
+            f"Login successful. Redirecting to {get_panel_endpoint(user)}.",
+            "success",
+        )
+        return redirect(url_for(get_panel_endpoint(user)))
 
     return render_template("login.html", **ctx("Login"))
 
@@ -2687,8 +2687,12 @@ def login_2fa():
         session["session_version"] = user.session_version
         session.pop("pending_2fa_user", None)
         log_activity("login_success_2fa", user_id=user.id)
-        flash("2FA verified. Login successful.", "success")
-        return redirect(url_for("dashboard"))
+        flash_notice(
+            "login_success",
+            f"2FA verified. Redirecting to {get_panel_endpoint(user)}.",
+            "success",
+        )
+        return redirect(url_for(get_panel_endpoint(user)))
 
     return render_template("login_2fa.html", **ctx("Two-Factor Login"))
 
@@ -2752,6 +2756,12 @@ def reset_password(token):
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    return redirect(url_for(get_panel_endpoint(current_user)))
+
+
+@app.route("/user-dashboard")
+@login_required
+def user_dashboard():
     total_achievements = Achievement.query.filter_by(created_by=current_user.id).count()
     total_goals = Goal.query.filter_by(owner_id=current_user.id).count()
     recent_uploads = (
@@ -2769,7 +2779,8 @@ def dashboard():
         recent_uploads=recent_uploads,
         last_login=last_login,
         security_status=security_status,
-        **ctx("Dashboard"),
+        dashboard_label="user_dashboard",
+        **ctx("User Dashboard"),
     )
 
 
@@ -2795,7 +2806,7 @@ def _run_ai_query_for_user(user_obj):
 @app.route("/user-panel")
 @login_required
 def user_panel():
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("user_dashboard"))
 
 
 @app.route("/profile")
@@ -4357,9 +4368,7 @@ def data_retention():
     return render_template("data_retention.html", **ctx("Data Retention"))
 
 
-@app.route("/owner")
-@role_required("owner", "admin")
-def owner_panel():
+def render_admin_dashboard():
     total_users = User.query.count()
     total_messages = ContactMessage.query.count()
     active_users = User.query.filter_by(is_active_user=True).count()
@@ -4477,8 +4486,21 @@ def owner_panel():
         lockout_range=lockout_range,
         lockout_feed=lockout_feed,
         audit_range=audit_range,
-        **ctx("Owner Panel"),
+        dashboard_label="admin_dashboard",
+        **ctx("Admin Dashboard"),
     )
+
+
+@app.route("/owner")
+@role_required("owner", "admin")
+def owner_panel():
+    return render_admin_dashboard()
+
+
+@app.route("/admin-dashboard")
+@role_required("owner", "admin")
+def admin_dashboard():
+    return render_admin_dashboard()
 
 
 

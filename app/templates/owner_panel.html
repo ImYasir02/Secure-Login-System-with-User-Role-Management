@@ -8,8 +8,8 @@
   <div class="relative">
   <div class="owner-panel-header flex flex-wrap items-start justify-between gap-4">
     <div>
-      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600">Admin / Owner</p>
-      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black">Owner Panel</h1>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600">{{ dashboard_label or 'admin_dashboard' }}</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black">Admin Dashboard</h1>
       <p class="mt-2 text-sm text-slate-700">Centralized control for user administration and incoming contact workflow.</p>
     </div>
     <a href="{{ url_for('user_management') }}" class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">Open User Management</a>

@@ -1621,6 +1621,20 @@
     html:not(.dark) .login-shell aside .mt-auto.hidden.rounded-2xl p:first-child {
       color: #334155 !important;
     }
+    @media (max-width: 1023px) {
+      html:not(.dark) .login-shell {
+        border-radius: 0 !important;
+      }
+      html:not(.dark) .login-shell > .relative.grid {
+        min-height: auto;
+        grid-template-columns: 1fr !important;
+      }
+      html:not(.dark) .login-shell > .relative.grid > div:first-child {
+        border-right: 0;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+      }
+    }
 
     /* Register page light-mode polish (login-consistent) */
     html:not(.dark) .register-shell {
@@ -4950,6 +4964,13 @@
     html:not(.dark) main .text-slate-400 {
       color: #64748b !important;
     }
+    .mobile-nav-strip {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .mobile-nav-strip::-webkit-scrollbar {
+      display: none;
+    }
 </style>
 </head>
 <body class="h-full light-fx-medium endpoint-{{ (request.endpoint or 'unknown')|replace('_', '-') }} bg-white text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
@@ -4963,9 +4984,9 @@
       {% set achievements_active = endpoint == 'achievements' %}
       {% set goals_active = endpoint == 'goals' %}
       {% set contact_active = endpoint == 'contact' %}
-      {% set user_panel_active = endpoint in ['user_panel', 'dashboard'] %}
+      {% set user_panel_active = endpoint in ['user_panel', 'dashboard', 'user_dashboard'] %}
       {% set settings_active = endpoint == 'settings' %}
-      {% set admin_active = endpoint in ['owner_panel', 'user_management', 'contact_messages', 'messages_view_alias'] %}
+      {% set admin_active = endpoint in ['owner_panel', 'admin_dashboard', 'user_management', 'contact_messages', 'messages_view_alias'] %}
       {% set nav_active_class = 'nav-active-glow rounded-full border border-cyan-300/55 px-3 py-2 text-sm font-semibold tracking-[0.01em] transition duration-150 ease-out bg-[linear-gradient(180deg,#101827_0%,#0f172a_100%)] text-white ring-2 ring-cyan-300/35 shadow-[0_0_0_1px_rgba(34,211,238,0.32),0_0_18px_rgba(34,211,238,0.28),0_10px_24px_rgba(15,23,42,0.22)] dark:border-cyan-300/30 dark:bg-cyan-400/12 dark:text-white dark:ring-cyan-300/30 dark:shadow-[0_0_0_1px_rgba(34,211,238,0.22),0_0_22px_rgba(34,211,238,0.22)]' %}
       {% set nav_idle_class = 'rounded-full px-3 py-2 text-sm font-semibold tracking-[0.005em] transition duration-150 ease-out text-slate-700 hover:bg-slate-100 hover:text-black dark:text-white/85 dark:hover:bg-white/10 dark:hover:text-white' %}
       {% set nav_outline_class = 'rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold tracking-[0.005em] text-black transition duration-150 ease-out hover:bg-slate-100 dark:border-white/15 dark:bg-transparent dark:text-white dark:hover:bg-white/10' %}
@@ -4984,7 +5005,7 @@
             {% if not is_logged_in %}
               <a href="{{ url_for('login') }}" class="transition hover:text-white">Login</a>
             {% else %}
-              <a href="{{ url_for('dashboard') }}" class="transition hover:text-white">Dashboard</a>
+              <a href="{{ url_for(panel_endpoint) }}" class="transition hover:text-white">Dashboard</a>
             {% endif %}
             <a href="{{ url_for('achievements') }}" class="transition hover:text-white">Achievements</a>
             <a href="{{ url_for('contact') }}" class="transition hover:text-white">Support</a>
@@ -4999,7 +5020,7 @@
         </a>
 
         <div class="flex items-center gap-1.5">
-          {% set vault_brand_href = url_for('dashboard') if is_logged_in else url_for('login') %}
+          {% set vault_brand_href = url_for(panel_endpoint) if is_logged_in else url_for('login') %}
           {% set vault_brand_size = 'sm' %}
           {% set vault_brand_show_text = false %}
           {% set vault_brand_with_glow = true %}
@@ -5024,9 +5045,9 @@
               <a href="{{ url_for('goals') }}" class="{{ nav_active_class if goals_active else nav_idle_class }}">Goals</a>
               <a href="{{ url_for('contact') }}" class="{{ nav_active_class if contact_active else nav_idle_class }}">Contact</a>
               {% if is_admin_owner %}
-                <a href="{{ url_for('owner_panel') }}" class="{{ nav_active_class if admin_active else nav_outline_class }}">Owner Panel</a>
+                <a href="{{ url_for('admin_dashboard') }}" class="{{ nav_active_class if admin_active else nav_outline_class }}">Admin Dashboard</a>
               {% else %}
-                <a href="{{ url_for('dashboard') }}" class="{{ nav_active_class if user_panel_active else nav_idle_class }}">Dashboard</a>
+                <a href="{{ url_for('user_dashboard') }}" class="{{ nav_active_class if user_panel_active else nav_idle_class }}">User Dashboard</a>
               {% endif %}
               <a href="{{ url_for('settings') }}" class="{{ nav_active_class if settings_active else nav_idle_class }}">Settings</a>
               <a href="{{ url_for('logout') }}" class="{{ nav_outline_class }}">Logout</a>
@@ -5039,8 +5060,8 @@
         </div>
       </div>
 
-      <div class="border-t border-slate-300 px-4 py-2 md:hidden dark:border-white/10 dark:bg-[#121731]/95">
-        <nav class="flex flex-wrap items-center gap-2">
+      <div class="mobile-nav-strip overflow-x-auto border-t border-slate-300 px-4 py-2 md:hidden dark:border-white/10 dark:bg-[#121731]/95">
+        <nav class="flex min-w-max flex-nowrap items-center gap-2">
           {% if not is_logged_in %}
             <a href="{{ url_for('home') }}" class="{{ mobile_nav_active if home_active else mobile_nav_idle }}">Home</a>
             <a href="{{ url_for('vault') }}" class="{{ mobile_nav_active if vault_active else mobile_nav_idle }}">My Files</a>
@@ -5058,9 +5079,9 @@
             <a href="{{ url_for('goals') }}" class="{{ mobile_nav_active if goals_active else mobile_nav_idle }}">Goals</a>
             <a href="{{ url_for('contact') }}" class="{{ mobile_nav_active if contact_active else mobile_nav_idle }}">Contact</a>
             {% if is_admin_owner %}
-              <a href="{{ url_for('owner_panel') }}" class="{{ mobile_nav_active if admin_active else mobile_nav_outline }}">Owner Panel</a>
+              <a href="{{ url_for('admin_dashboard') }}" class="{{ mobile_nav_active if admin_active else mobile_nav_outline }}">Admin Dashboard</a>
             {% else %}
-              <a href="{{ url_for('dashboard') }}" class="{{ mobile_nav_active if user_panel_active else mobile_nav_idle }}">Dashboard</a>
+              <a href="{{ url_for('user_dashboard') }}" class="{{ mobile_nav_active if user_panel_active else mobile_nav_idle }}">User Dashboard</a>
             {% endif %}
             <a href="{{ url_for('settings') }}" class="{{ mobile_nav_active if settings_active else mobile_nav_idle }}">Settings</a>
             <a href="{{ url_for('logout') }}" class="{{ mobile_nav_outline }}">Logout</a>
@@ -5074,7 +5095,7 @@
         {% if messages %}
           <div class="mb-6 space-y-3">
             {% for category, msg in messages %}
-              <div class="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              <div class="rounded-2xl border px-4 py-3 text-sm {% if category == 'success' %}border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-100{% elif category == 'error' %}border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100{% else %}border-slate-300 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100{% endif %}">
                 {{ msg }}
               </div>
             {% endfor %}

@@ -132,7 +132,7 @@ def run_checks(include_auth: bool = False, include_full: bool = False) -> int:
     def login_and_assert(client, email: str, password: str, name: str) -> None:
         clear_rate_limits()
         resp = client.post("/login", data={"email": email, "password": password}, follow_redirects=True)
-        assert_contains(name, resp, ["Login successful.", "Dashboard"])
+        assert_contains(name, resp, ["login_success"])
 
     def cleanup() -> None:
         with app.app_context():
@@ -275,7 +275,7 @@ def run_checks(include_auth: bool = False, include_full: bool = False) -> int:
             login_and_assert(auth_client, user_email, user_password, "POST /login success (user)")
 
             # Authenticated GET checks
-            assert_contains("GET /dashboard (auth)", auth_client.get("/dashboard"), ["Dashboard", "Security Status"], 200)
+            assert_contains("GET /dashboard (auth)", auth_client.get("/dashboard", follow_redirects=True), ["User Dashboard", "Security Status"], 200)
             assert_contains("GET /profile (auth)", auth_client.get("/profile"), ["Profile"], 200)
             assert_contains("GET /settings (auth)", auth_client.get("/settings"), ["Settings", "Save Settings"], 200)
             assert_contains(
@@ -358,12 +358,12 @@ def run_checks(include_auth: bool = False, include_full: bool = False) -> int:
                 login_and_assert(owner_client, owner_email, owner_password, "POST /login success (owner)")
                 login_and_assert(admin_client, admin_email, admin_password, "POST /login success (admin)")
 
-                assert_contains("GET /owner (owner)", owner_client.get("/owner"), ["Owner Panel", "User Management"], 200)
+                assert_contains("GET /owner (owner)", owner_client.get("/owner"), ["Admin Dashboard", "User Management"], 200)
                 assert_contains("GET /user-management (owner)", owner_client.get("/user-management"), ["User Management"], 200)
                 assert_contains("GET /contact-messages (owner)", owner_client.get("/contact-messages"), ["Contact Messages View"], 200)
 
-                assert_contains("GET /owner (admin)", admin_client.get("/owner"), ["Owner Panel"], 200)
-                assert_contains("GET /admin alias (admin)", admin_client.get("/admin", follow_redirects=True), ["Owner Panel"], 200)
+                assert_contains("GET /owner (admin)", admin_client.get("/owner"), ["Admin Dashboard"], 200)
+                assert_contains("GET /admin alias (admin)", admin_client.get("/admin", follow_redirects=True), ["Admin Dashboard"], 200)
 
                 # Admin should not manage owner account.
                 assert_contains(

@@ -6,8 +6,8 @@
     <div class="absolute right-[-10%] top-[18%] h-64 w-64 rounded-full bg-fuchsia-500/14 blur-3xl"></div>
   </div>
   <div class="relative">
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-cyan-200">Dashboard</p>
-    <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black dark:text-white">Dashboard</h1>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-cyan-200">{{ dashboard_label or 'user_dashboard' }}</p>
+    <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black dark:text-white">User Dashboard</h1>
     <p class="mt-2 text-sm text-slate-700 dark:text-white/75">Security and productivity snapshot.</p>
     <div class="dashboard-stats mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <div class="rounded-2xl border border-slate-300 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5"><p class="text-xs uppercase text-slate-600 dark:text-cyan-200">Total Achievements</p><p class="mt-2 text-2xl font-semibold text-black dark:text-white">{{ total_achievements }}</p></div>
