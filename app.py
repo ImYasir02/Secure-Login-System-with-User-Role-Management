@@ -428,7 +428,7 @@ def normalize_role(role):
 def flash_notice(code, message, level="info"):
     label = sanitize_text(code, 80) or "notice"
     detail = sanitize_text(message, 500, multiline=True) or ""
-    flash(f"{label}: {detail}" if detail else label, level)
+    flash(f"{label} {detail}".strip() if detail else label, level)
 
 
 def default_about_title_for_user(user):
@@ -2512,7 +2512,7 @@ def register():
         log_activity("registration_success", f"self signup role={user.role}", user_id=user.id)
         flash_notice(
             "registration_success",
-            "Account created. db_users_table updated and password_hash stored securely. Please verify your email before login.",
+            "Please verify your email before login.",
             "success",
         )
         return redirect(url_for("register"))
@@ -2649,17 +2649,13 @@ def login():
 
         if otp_required(user):
             session["pending_2fa_user"] = user.id
-            flash_notice("login_success", "Primary credentials verified. Enter your 2FA code to complete login.", "success")
+            flash_notice("login_success", "Enter your 2FA code to complete login.", "success")
             return redirect(url_for("login_2fa"))
 
         login_user(user)
         session["session_version"] = user.session_version
         log_activity("login_success", user_id=user.id)
-        flash_notice(
-            "login_success",
-            f"Login successful. Redirecting to {get_panel_endpoint(user)}.",
-            "success",
-        )
+        flash_notice("login_success", "Login successful.", "success")
         return redirect(url_for(get_panel_endpoint(user)))
 
     return render_template("login.html", **ctx("Login"))
@@ -2687,11 +2683,7 @@ def login_2fa():
         session["session_version"] = user.session_version
         session.pop("pending_2fa_user", None)
         log_activity("login_success_2fa", user_id=user.id)
-        flash_notice(
-            "login_success",
-            f"2FA verified. Redirecting to {get_panel_endpoint(user)}.",
-            "success",
-        )
+        flash_notice("login_success", "Login successful.", "success")
         return redirect(url_for(get_panel_endpoint(user)))
 
     return render_template("login_2fa.html", **ctx("Two-Factor Login"))
