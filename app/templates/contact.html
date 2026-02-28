@@ -10,7 +10,7 @@
     <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-cyan-200">Contact</p>
     <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black dark:text-white">Contact Us</h1>
     <p class="mt-2 text-sm text-slate-600 dark:text-white/75">Use this form to connect, collaborate, share achievements, discuss goals, or ask platform-related questions.</p>
-    <p class="mt-4 text-sm font-medium text-black dark:text-white">Email: <span class="text-slate-700 dark:text-white/80">yasirsec21@gmail.com</span></p>
+    <p class="mt-4 text-sm font-medium text-black dark:text-white">Email: <span class="text-slate-700 dark:text-white/80">{{ contact_public_email }}</span></p>
 
     <form method="POST" enctype="multipart/form-data" class="contact-form mt-6 space-y-4">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

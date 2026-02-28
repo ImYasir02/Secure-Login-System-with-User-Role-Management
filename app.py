@@ -113,6 +113,15 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=45)
 app.config["PROPAGATE_EXCEPTIONS"] = False
 app.config["REQUIRE_EMAIL_VERIFICATION"] = os.environ.get("REQUIRE_EMAIL_VERIFICATION", "0") == "1"
 app.config["ADMIN_SIGNUP_KEY"] = (os.environ.get("ADMIN_SIGNUP_KEY", "") or "").strip()
+app.config["CONTACT_PUBLIC_EMAIL"] = (os.environ.get("CONTACT_PUBLIC_EMAIL", "yasirsec21@gmail.com") or "yasirsec21@gmail.com").strip()
+smtp_port_raw = (os.environ.get("SMTP_PORT", "587") or "587").strip()
+app.config["SMTP_FROM_EMAIL"] = (os.environ.get("SMTP_FROM_EMAIL", os.environ.get("SMTP_USER", "")) or "").strip()
+app.config["CONTACT_NOTIFY_EMAIL"] = (
+    os.environ.get("CONTACT_NOTIFY_EMAIL", app.config["CONTACT_PUBLIC_EMAIL"])
+    or app.config["CONTACT_PUBLIC_EMAIL"]
+).strip()
+app.config["SMTP_USE_SSL"] = (os.environ.get("SMTP_USE_SSL", "1" if smtp_port_raw == "465" else "0") == "1")
+app.config["SMTP_USE_TLS"] = (os.environ.get("SMTP_USE_TLS", "0" if smtp_port_raw == "465" else "1") == "1")
 app.config["ENFORCE_HTTPS"] = os.environ.get("ENFORCE_HTTPS", "1" if IS_PRODUCTION else "0") == "1"
 app.config["APP_VERSION"] = os.environ.get("APP_VERSION", "1.0.0")
 app.config["SOCIAL_X_URL"] = (os.environ.get("SOCIAL_X_URL", "https://x.com") or "https://x.com").strip()
@@ -643,14 +652,18 @@ def send_contact_notification(contact_message):
     smtp_user = os.environ.get("SMTP_USER", "").strip()
     smtp_pass = os.environ.get("SMTP_PASS", "").strip()
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
-    notify_to = os.environ.get("CONTACT_NOTIFY_EMAIL", smtp_user).strip()
-    if not (smtp_host and smtp_user and smtp_pass and notify_to):
-        return
+    notify_to = (app.config.get("CONTACT_NOTIFY_EMAIL") or smtp_user).strip()
+    from_email = (app.config.get("SMTP_FROM_EMAIL") or smtp_user).strip()
+    use_ssl = bool(app.config.get("SMTP_USE_SSL", False))
+    use_tls = bool(app.config.get("SMTP_USE_TLS", True)) and not use_ssl
+    if not (smtp_host and smtp_user and smtp_pass and notify_to and from_email):
+        return False, "SMTP configuration incomplete."
     try:
         msg = EmailMessage()
         msg["Subject"] = f"New Contact Submission: {contact_message.subject[:80]}"
-        msg["From"] = smtp_user
+        msg["From"] = from_email
         msg["To"] = notify_to
+        msg["Reply-To"] = contact_message.email
         attachment_note = ""
         if contact_message.attachment_original:
             attachment_note = f"\nAttachment: {contact_message.attachment_original}"
@@ -658,12 +671,20 @@ def send_contact_notification(contact_message):
             f"Name: {contact_message.name}\nEmail: {contact_message.email}\n"
             f"Subject: {contact_message.subject}{attachment_note}\n\n{contact_message.message}"
         )
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=8) as server:
-            server.starttls()
+        smtp_class = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+        with smtp_class(smtp_host, smtp_port, timeout=8) as server:
+            if hasattr(server, "ehlo"):
+                server.ehlo()
+            if use_tls:
+                server.starttls()
+                if hasattr(server, "ehlo"):
+                    server.ehlo()
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
-    except Exception:
-        return
+        return True, ""
+    except Exception as exc:
+        app.logger.exception("Contact email delivery failed for message_id=%s", getattr(contact_message, "id", None))
+        return False, sanitize_text(str(exc), 240)
 
 
 def build_goal_notifications_for_user(user_obj, limit=5):
@@ -2388,11 +2409,17 @@ def contact():
         )
         db.session.add(contact_message)
         db.session.commit()
-        send_contact_notification(contact_message)
+        email_sent, email_error = send_contact_notification(contact_message)
         log_activity("contact_submission", f"subject={final_subject[:60]}")
+        if email_sent:
+            log_activity("contact_email_sent", f"message_id={contact_message.id}")
+        else:
+            log_activity("contact_email_failed", f"message_id={contact_message.id} {email_error[:160]}")
         record_action_attempt("contact_submit")
         session.pop("contact_form_data", None)
         flash("Message submitted successfully.", "success")
+        if not email_sent:
+            flash("Message save ho gaya, but email notification send nahi hua. SMTP settings check karein.", "error")
         return redirect(url_for("contact"))
 
     contact_form_data = session.pop("contact_form_data", {}) or {}
@@ -2419,6 +2446,7 @@ def contact():
         "contact.html",
         subject_options=CONTACT_SUBJECT_OPTIONS,
         contact_form=contact_form_data,
+        contact_public_email=app.config.get("CONTACT_PUBLIC_EMAIL", "yasirsec21@gmail.com"),
         **ctx("Contact Us"),
     )
 
