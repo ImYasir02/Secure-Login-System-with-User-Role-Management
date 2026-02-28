@@ -11,6 +11,10 @@
     <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black dark:text-white">Contact Us</h1>
     <p class="mt-2 text-sm text-slate-600 dark:text-white/75">Use this form to connect, collaborate, share achievements, discuss goals, or ask platform-related questions.</p>
     <p class="mt-4 text-sm font-medium text-black dark:text-white">Email: <span class="text-slate-700 dark:text-white/80">{{ contact_public_email }}</span></p>
+    <div class="mt-4 rounded-2xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+      <p class="font-semibold">How this works</p>
+      <p class="mt-1">Is form ko submit karne par aapka message aur details directly <span class="font-semibold">{{ contact_public_email }}</span> par email notification ke through pahunchti hain. Agar aap screenshot attach karte hain, to uska reference bhi owner ko milta hai.</p>
+    </div>
 
     <form method="POST" enctype="multipart/form-data" class="contact-form mt-6 space-y-4">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
