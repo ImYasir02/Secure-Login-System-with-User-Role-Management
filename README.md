@@ -103,3 +103,20 @@ This project demonstrates secure software development principles combined with v
 ---
 
 ##  Project Structure
+=======
+##  Project Structure
+
+app/                # Main application (routes, models, templates)
+backend/            # Supporting backend modules
+docs/               # Documentation & QA checklist
+scripts/            # QA and utility scripts
+instance/           # Local runtime configuration
+deploy/             # Deployment-related files
+app.py              # Application entry point
+requirements.txt    # Project dependencies
+README.md
+
+### Utility Scripts
+- `scripts/ui_regression_smoke_checklist.py`
+- `scripts/capture_pwa_screenshots.py`
+- `docs/UI_QA_CHECKLIST.md`
