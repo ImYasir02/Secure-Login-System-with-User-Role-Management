@@ -185,6 +185,30 @@ ALLOWED_CONTACT_SUBJECTS = set(CONTACT_SUBJECT_OPTIONS)
 ALLOWED_CONTACT_ATTACHMENT_EXTENSIONS = {"png", "jpg", "jpeg"}
 ALLOWED_TIP_ATTACHMENT_EXTENSIONS = {"png", "jpg", "jpeg", "pdf"}
 SPECIAL_ABOUT_EMAIL = "yasir123@gmail.com"
+PUBLIC_ABOUT_PROFILE = {
+    "name": "Md Yasir",
+    "email": "yasirsec21@gmail.com",
+    "title": "About Me",
+    "intro": (
+        "My name is Md Yasir, and I am a cybersecurity enthusiast with over two years of practical "
+        "experience in bug bounty hunting and vulnerability research. I have responsibly reported "
+        "security issues to organizations, earning Hall of Fame recognition and bounty rewards, "
+        "which reflects my commitment to ethical security practices."
+    ),
+    "experience": (
+        "I have completed multiple cybersecurity certifications and structured training programs "
+        "covering networking fundamentals, Linux systems, and Python programming. Through internships "
+        "and hands-on projects, including the development of secure login systems with role-based "
+        "access control, I have gained practical experience in secure application design and defensive "
+        "security implementation."
+    ),
+    "goal": (
+        "I am passionate about identifying real-world vulnerabilities, strengthening application "
+        "security, and continuously improving my technical expertise. My goal is to contribute to "
+        "building secure, reliable, and resilient digital systems while maintaining strong ethical "
+        "standards in cybersecurity."
+    ),
+}
 RATE_LIMIT_BUCKETS = {}
 COMMENT_COOLDOWN_TRACKER = {}
 
@@ -1937,6 +1961,7 @@ def about():
         custom_about_title=custom_about_title,
         default_about_title_suggestion=default_about_title_suggestion,
         special_about_email=SPECIAL_ABOUT_EMAIL,
+        public_about_profile=PUBLIC_ABOUT_PROFILE,
         **ctx("About Me"),
     )
 
@@ -2404,6 +2429,7 @@ def register():
         email = validate_email_input(request.form.get("email"))
         password = request.form.get("password") or ""
         confirm_password = request.form.get("confirm_password") or ""
+        selected_role = normalize_role(request.form.get("role"))
         accept_terms = request.form.get("accept_terms") == "on"
 
         if not username or not email or not password or not confirm_password:
@@ -2443,7 +2469,7 @@ def register():
             username=username,
             email=email,
             password_hash=pw_hash,
-            role="user",
+            role=selected_role if selected_role in {"user", "admin"} else "user",
             is_active_user=True,
             is_email_verified=False,
         )
