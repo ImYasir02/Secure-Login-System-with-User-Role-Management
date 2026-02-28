@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="home-readable relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-10 dark:border-white/10 dark:bg-[#080d28]">
+<section class="home-readable achievements-hero relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-10 dark:border-white/10 dark:bg-[#080d28]">
   <div class="pointer-events-none absolute inset-0 hidden dark:block">
     <div class="absolute left-[-8%] top-[8%] h-60 w-60 rounded-full bg-blue-500/18 blur-3xl"></div>
     <div class="absolute right-[-8%] bottom-[0%] h-64 w-64 rounded-full bg-fuchsia-500/14 blur-3xl"></div>
@@ -8,11 +8,16 @@
   <div class="relative">
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-black">Achievements</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-cyan-200">Achievements</p>
       <h1 class="mt-2 text-3xl font-semibold tracking-tight text-black">Verified Achievement Records</h1>
       <p class="mt-2 text-sm leading-7 text-black">
         Store and manage your professional achievements securely. Upload proof documents, track issue dates, issuers, and maintain a verified personal record.
       </p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">Verified Records</span>
+        <span class="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-200">Private/Public Visibility</span>
+        <span class="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-400/10 dark:text-indigo-200">Secure Uploads</span>
+      </div>
     </div>
     {% if is_logged_in %}
       <a href="#add-achievement" class="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-gradient-to-r dark:from-indigo-500 dark:to-blue-500 dark:shadow-[0_8px_24px_rgba(79,70,229,0.35)]">+ Add Achievement</a>
@@ -21,8 +26,9 @@
   </div>
 </section>
 
-<section class="home-readable mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
-  <h2 class="text-xl font-semibold tracking-tight text-black">Private Document Security Section</h2>
+<section class="home-readable achievements-security mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-cyan-200">Security Layer</p>
+  <h2 class="mt-2 text-xl font-semibold tracking-tight text-black">Private Document Security Section</h2>
   <ul class="mt-3 grid gap-3 text-sm text-black md:grid-cols-2">
     <li class="rounded-xl border border-slate-300 p-3">AES-256 encrypted file storage for documents and photos</li>
     <li class="rounded-xl border border-slate-300 p-3">Strict file type validation and 5MB upload limit</li>
@@ -32,7 +38,11 @@
   <a href="{{ url_for('privacy_vault') }}" class="mt-4 inline-block rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-black hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Open Privacy Vault</a>
 </section>
 
-<section class="home-readable mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+<section class="home-readable achievements-filters mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <div class="mb-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-cyan-200">Browse Records</p>
+    <h2 class="mt-1 text-xl font-semibold tracking-tight text-black dark:text-white">Search, Filter & Sort</h2>
+  </div>
   <form method="GET" class="grid gap-3 md:grid-cols-5">
     <input type="text" name="q" value="{{ search_query or '' }}" maxlength="120" placeholder="Search achievements"
            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-black focus:border-black focus:outline-none">
@@ -53,8 +63,9 @@
 </section>
 
 {% if is_logged_in %}
-<section id="add-achievement" class="home-readable mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
-  <h2 class="text-2xl font-semibold tracking-tight text-black">Add Achievement</h2>
+<section id="add-achievement" class="home-readable achievements-create mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-cyan-200">Create Record</p>
+  <h2 class="mt-2 text-2xl font-semibold tracking-tight text-black">Add Achievement</h2>
   <form method="POST" enctype="multipart/form-data" class="mt-5 grid gap-4 md:grid-cols-2">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -98,7 +109,11 @@
 </section>
 {% endif %}
 
-<section class="home-readable mt-8">
+<section class="home-readable achievements-list mt-8">
+  <div class="mb-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-cyan-200">{% if is_logged_in %}Your Records{% else %}Public Records{% endif %}</p>
+    <h2 class="mt-1 text-2xl font-semibold tracking-tight text-black dark:text-white">Achievement Collection</h2>
+  </div>
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     {% set achievement_list = your_achievements if is_logged_in else public_achievements %}
     {% for item in achievement_list %}

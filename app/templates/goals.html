@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#080d28]">
+<section class="goals-hero relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#080d28]">
   <div class="pointer-events-none absolute inset-0 hidden dark:block">
     <div class="absolute left-[-8%] top-[4%] h-56 w-56 rounded-full bg-blue-500/18 blur-3xl"></div>
     <div class="absolute right-[-10%] top-[16%] h-64 w-64 rounded-full bg-fuchsia-500/14 blur-3xl"></div>
@@ -9,7 +9,12 @@
   <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-cyan-200">Goals</p>
   <h1 class="mt-2 text-3xl font-semibold text-black dark:text-slate-100">Goals</h1>
   <p class="mt-2 text-sm text-slate-700 dark:text-white/75">Personal goals + public/private tips, tricks, and career guidance posts.</p>
-  <div class="mt-4 rounded-2xl border border-slate-300 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+  <div class="mt-4 flex flex-wrap gap-2">
+    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">Progress Tracking</span>
+    <span class="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-200">Community Tips</span>
+    <span class="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-400/10 dark:text-indigo-200">Encrypted Attachments</span>
+  </div>
+  <div class="goals-vault-card mt-4 rounded-2xl border border-slate-300 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
     <h2 class="text-sm font-semibold text-black dark:text-slate-100">Document & Photo Privacy Vault</h2>
     <p class="mt-1 text-xs text-slate-700">Your uploads are encrypted at rest, file types are validated, size-limited, and optional malware scan checks are applied.</p>
     <a href="{{ url_for('privacy_vault') }}" class="mt-2 inline-block rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/10">Open Privacy Vault</a>
@@ -50,8 +55,9 @@
 </section>
 
 {% if is_logged_in %}
-<section class="mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
-  <h2 class="text-xl font-semibold dark:text-slate-100">Add Personal Goal</h2>
+<section class="goals-create mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-cyan-200">Personal Planner</p>
+  <h2 class="mt-2 text-xl font-semibold dark:text-slate-100">Add Personal Goal</h2>
   <form id="goalForm" method="POST" class="mt-4 grid gap-3 md:grid-cols-2">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="action" value="goal">
@@ -67,8 +73,9 @@
 </section>
 {% endif %}
 
-<section class="mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
-  <h2 class="text-xl font-semibold dark:text-slate-100">Share Tips / Tricks / Career Post</h2>
+<section class="goals-tips-create mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-pink-300">Community Sharing</p>
+  <h2 class="mt-2 text-xl font-semibold dark:text-slate-100">Share Tips / Tricks / Career Post</h2>
   <form id="tipForm" method="POST" enctype="multipart/form-data" class="mt-4 grid gap-3">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="action" value="tip">
@@ -97,8 +104,9 @@
 </section>
 
 {% if is_logged_in %}
-<section class="mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
-  <h2 class="text-xl font-semibold dark:text-slate-100">Saved Tips</h2>
+<section class="goals-saved mt-6 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
+  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-cyan-200">Saved Collection</p>
+  <h2 class="mt-2 text-xl font-semibold dark:text-slate-100">Saved Tips</h2>
   <form method="GET" class="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto_auto_auto]">
     <input type="hidden" name="q" value="{{ search_query or '' }}">
     <input type="hidden" name="author" value="{{ author_filter or '' }}">
@@ -154,7 +162,12 @@
 {% endif %}
 
 {% if is_logged_in %}
-<section class="mt-6 grid gap-4 md:grid-cols-2">
+<section class="goals-personal-list mt-6">
+  <div class="mb-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-cyan-200">Your Progress</p>
+    <h2 class="mt-1 text-2xl font-semibold tracking-tight text-black dark:text-white">Personal Goals</h2>
+  </div>
+  <div class="grid gap-4 md:grid-cols-2">
   {% for goal in your_goals %}
     <article class="rounded-3xl border border-slate-300 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#0b112f]">
       <div class="flex items-center justify-between gap-2">
@@ -170,10 +183,11 @@
   {% else %}
     <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white/70">No personal goals yet.</div>
   {% endfor %}
+  </div>
 </section>
 {% endif %}
 
-<section class="mt-6">
+<section class="goals-community mt-6">
   <div class="mb-3 flex items-end justify-between gap-3">
     <div>
       <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-pink-300">Community</p>

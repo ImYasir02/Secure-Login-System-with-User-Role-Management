@@ -3043,6 +3043,14 @@
     html:not(.dark) .home-hero,
     html:not(.dark) .home-benefits,
     html:not(.dark) .home-security-features,
+    html:not(.dark) .achievements-hero,
+    html:not(.dark) .achievements-security,
+    html:not(.dark) .achievements-filters,
+    html:not(.dark) .achievements-create,
+    html:not(.dark) .goals-hero,
+    html:not(.dark) .goals-create,
+    html:not(.dark) .goals-tips-create,
+    html:not(.dark) .goals-saved,
     html:not(.dark) .about-hero,
     html:not(.dark) .about-card,
     html:not(.dark) .dashboard-page,
@@ -3053,6 +3061,12 @@
     }
     html:not(.dark) .home-benefits,
     html:not(.dark) .home-security-features,
+    html:not(.dark) .achievements-security,
+    html:not(.dark) .achievements-filters,
+    html:not(.dark) .achievements-create,
+    html:not(.dark) .goals-create,
+    html:not(.dark) .goals-tips-create,
+    html:not(.dark) .goals-saved,
     html:not(.dark) .about-card,
     html:not(.dark) .dashboard-summary,
     html:not(.dark) .contact-support-card {
@@ -3074,6 +3088,13 @@
     }
     html:not(.dark) .home-benefits h2,
     html:not(.dark) .home-security-features h2,
+    html:not(.dark) .achievements-security h2,
+    html:not(.dark) .achievements-filters h2,
+    html:not(.dark) .achievements-create h2,
+    html:not(.dark) .goals-hero h2,
+    html:not(.dark) .goals-create h2,
+    html:not(.dark) .goals-tips-create h2,
+    html:not(.dark) .goals-saved h2,
     html:not(.dark) .about-card h2,
     html:not(.dark) .about-records-section h2,
     html:not(.dark) .dashboard-summary h2,
@@ -3084,6 +3105,14 @@
     }
     html:not(.dark) .home-benefits p,
     html:not(.dark) .home-security-features p,
+    html:not(.dark) .achievements-hero p,
+    html:not(.dark) .achievements-security p,
+    html:not(.dark) .achievements-filters p,
+    html:not(.dark) .achievements-create p,
+    html:not(.dark) .goals-hero p,
+    html:not(.dark) .goals-create p,
+    html:not(.dark) .goals-tips-create p,
+    html:not(.dark) .goals-saved p,
     html:not(.dark) .about-readable p,
     html:not(.dark) .about-card p,
     html:not(.dark) .about-records-section p,
@@ -3224,6 +3253,12 @@
     }
     html.dark .home-benefits,
     html.dark .home-security-features,
+    html.dark .achievements-security,
+    html.dark .achievements-filters,
+    html.dark .achievements-create,
+    html.dark .goals-create,
+    html.dark .goals-tips-create,
+    html.dark .goals-saved,
     html.dark .about-card,
     html.dark .about-record-card,
     html.dark .about-empty-state,
@@ -3235,6 +3270,11 @@
       margin-top: 1.5rem !important;
     }
     html.dark .home-security-features {
+      margin-top: 1.5rem !important;
+    }
+    html.dark .achievements-list,
+    html.dark .goals-personal-list,
+    html.dark .goals-community {
       margin-top: 1.5rem !important;
     }
     html.dark .about-records-section,
@@ -4666,6 +4706,14 @@
     /* Targeted dark-mode page polish (keep login untouched) */
     html.dark body.endpoint-home .home-hero,
     html.dark body.endpoint-home .home-security-features,
+    html.dark body.endpoint-achievements .achievements-hero,
+    html.dark body.endpoint-achievements .achievements-security,
+    html.dark body.endpoint-achievements .achievements-filters,
+    html.dark body.endpoint-achievements .achievements-create,
+    html.dark body.endpoint-goals .goals-hero,
+    html.dark body.endpoint-goals .goals-create,
+    html.dark body.endpoint-goals .goals-tips-create,
+    html.dark body.endpoint-goals .goals-saved,
     html.dark body.endpoint-achievements main > section,
     html.dark body.endpoint-goals main > section,
     html.dark body.endpoint-contact main > .grid > section,
@@ -4981,6 +5029,31 @@
     html:not(.dark) .home-security-features .home-feature-stat-strip > div {
       background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(241,245,249,0.84)) !important;
       box-shadow: 0 12px 28px rgba(15,23,42,0.06) !important;
+    }
+    html:not(.dark) .achievements-hero,
+    html:not(.dark) .goals-hero {
+      background:
+        radial-gradient(50rem 18rem at 0% 0%, rgba(34,211,238,0.10), transparent 58%),
+        radial-gradient(44rem 18rem at 100% 100%, rgba(99,91,255,0.10), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,250,252,0.96)) !important;
+    }
+    html:not(.dark) .achievements-hero .rounded-full,
+    html:not(.dark) .goals-hero .rounded-full,
+    html:not(.dark) .about-hero .text-xs.font-semibold.uppercase {
+      box-shadow: 0 8px 18px rgba(15,23,42,0.04);
+    }
+    html:not(.dark) .achievements-list article,
+    html:not(.dark) .goals-personal-list article,
+    html:not(.dark) .goals-community article,
+    html:not(.dark) .about-record-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,250,252,0.95)) !important;
+      box-shadow: 0 14px 28px rgba(15,23,42,0.05) !important;
+    }
+    html.dark .achievements-list article,
+    html.dark .goals-personal-list article,
+    html.dark .goals-community article,
+    html.dark .about-record-card {
+      box-shadow: none !important;
     }
     html:not(.dark) .home-security-features .home-feature-card {
       background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.95)) !important;
