@@ -29,12 +29,25 @@
 
           <div>
             <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600 dark:text-white/70">Account Role</label>
-            <select name="role"
+            <select id="registerRole" name="role"
                     class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-black shadow-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10 dark:border-white/15 dark:bg-white/5 dark:text-white">
               <option value="user">Normal User</option>
               <option value="admin">Admin</option>
             </select>
             <p class="mt-2 text-xs text-slate-600 dark:text-white/60">Choose whether this new account should be created as a normal user or an admin.</p>
+          </div>
+
+          <div id="adminSignupKeyWrap" class="hidden">
+            <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600 dark:text-white/70">Admin Signup Key</label>
+            <input id="adminSignupKey" name="admin_signup_key" type="password" maxlength="120" placeholder="Enter admin signup key"
+                   class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-black shadow-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10 dark:border-white/15 dark:bg-white/5 dark:text-white" />
+            <p class="mt-2 text-xs text-slate-600 dark:text-white/60">
+              {% if admin_signup_enabled %}
+                Admin account creation requires the secret admin signup key.
+              {% else %}
+                Admin signup is currently disabled until an admin signup key is configured on the server.
+              {% endif %}
+            </p>
           </div>
 
           <div>
@@ -127,6 +140,22 @@
   });
   const registerPassword = document.getElementById('registerPassword');
   const registerStrength = document.getElementById('registerStrength');
+  const registerRole = document.getElementById('registerRole');
+  const adminSignupKeyWrap = document.getElementById('adminSignupKeyWrap');
+  const adminSignupKey = document.getElementById('adminSignupKey');
+  const syncAdminSignupField = () => {
+    if (!registerRole || !adminSignupKeyWrap || !adminSignupKey) return;
+    const adminSelected = registerRole.value === 'admin';
+    adminSignupKeyWrap.classList.toggle('hidden', !adminSelected);
+    adminSignupKey.required = adminSelected;
+    if (!adminSelected) {
+      adminSignupKey.value = '';
+    }
+  };
+  if (registerRole) {
+    registerRole.addEventListener('change', syncAdminSignupField);
+    syncAdminSignupField();
+  }
   if (registerPassword && registerStrength) {
     registerPassword.addEventListener('input', () => {
       const v = registerPassword.value || '';

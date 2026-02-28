@@ -112,6 +112,7 @@ app.config["REMEMBER_COOKIE_SAMESITE"] = "Strict"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=45)
 app.config["PROPAGATE_EXCEPTIONS"] = False
 app.config["REQUIRE_EMAIL_VERIFICATION"] = os.environ.get("REQUIRE_EMAIL_VERIFICATION", "0") == "1"
+app.config["ADMIN_SIGNUP_KEY"] = (os.environ.get("ADMIN_SIGNUP_KEY", "") or "").strip()
 app.config["ENFORCE_HTTPS"] = os.environ.get("ENFORCE_HTTPS", "1" if IS_PRODUCTION else "0") == "1"
 app.config["APP_VERSION"] = os.environ.get("APP_VERSION", "1.0.0")
 app.config["SOCIAL_X_URL"] = (os.environ.get("SOCIAL_X_URL", "https://x.com") or "https://x.com").strip()
@@ -2430,6 +2431,7 @@ def register():
         password = request.form.get("password") or ""
         confirm_password = request.form.get("confirm_password") or ""
         selected_role = normalize_role(request.form.get("role"))
+        admin_signup_key = sanitize_text(request.form.get("admin_signup_key"), 120)
         accept_terms = request.form.get("accept_terms") == "on"
 
         if not username or not email or not password or not confirm_password:
@@ -2451,6 +2453,15 @@ def register():
         if not accept_terms:
             flash("Please accept Terms and Privacy Policy.", "error")
             return redirect(url_for("register"))
+
+        if selected_role == "admin":
+            configured_admin_key = app.config.get("ADMIN_SIGNUP_KEY", "")
+            if not configured_admin_key:
+                flash("Admin signup is currently disabled. Use normal signup or contact the site owner.", "error")
+                return redirect(url_for("register"))
+            if admin_signup_key != configured_admin_key:
+                flash("Invalid admin signup key.", "error")
+                return redirect(url_for("register"))
 
         existing = User.query.filter_by(email=email).first()
         if existing:
@@ -2482,7 +2493,12 @@ def register():
         return redirect(url_for("register"))
 
     verify_url = session.pop("dev_verify_link", None)
-    return render_template("register.html", verify_url=verify_url, **ctx("Signup"))
+    return render_template(
+        "register.html",
+        verify_url=verify_url,
+        admin_signup_enabled=bool(app.config.get("ADMIN_SIGNUP_KEY", "")),
+        **ctx("Signup"),
+    )
 
 
 @app.route("/verify-email/<token>")
