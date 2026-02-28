@@ -3042,6 +3042,7 @@
     /* Cross-page spacing + typography scale audit (home/about/contact/dashboard) */
     html:not(.dark) .home-hero,
     html:not(.dark) .home-benefits,
+    html:not(.dark) .home-security-features,
     html:not(.dark) .about-hero,
     html:not(.dark) .about-card,
     html:not(.dark) .dashboard-page,
@@ -3051,6 +3052,7 @@
       border-color: var(--stripe-line) !important;
     }
     html:not(.dark) .home-benefits,
+    html:not(.dark) .home-security-features,
     html:not(.dark) .about-card,
     html:not(.dark) .dashboard-summary,
     html:not(.dark) .contact-support-card {
@@ -3071,6 +3073,7 @@
       line-height: 1.02 !important;
     }
     html:not(.dark) .home-benefits h2,
+    html:not(.dark) .home-security-features h2,
     html:not(.dark) .about-card h2,
     html:not(.dark) .about-records-section h2,
     html:not(.dark) .dashboard-summary h2,
@@ -3080,6 +3083,7 @@
       line-height: 1.08 !important;
     }
     html:not(.dark) .home-benefits p,
+    html:not(.dark) .home-security-features p,
     html:not(.dark) .about-readable p,
     html:not(.dark) .about-card p,
     html:not(.dark) .about-records-section p,
@@ -3219,6 +3223,7 @@
       }
     }
     html.dark .home-benefits,
+    html.dark .home-security-features,
     html.dark .about-card,
     html.dark .about-record-card,
     html.dark .about-empty-state,
@@ -3227,6 +3232,9 @@
       border-radius: 0.95rem !important;
     }
     html.dark .home-benefits {
+      margin-top: 1.5rem !important;
+    }
+    html.dark .home-security-features {
       margin-top: 1.5rem !important;
     }
     html.dark .about-records-section,
@@ -4657,6 +4665,7 @@
     }
     /* Targeted dark-mode page polish (keep login untouched) */
     html.dark body.endpoint-home .home-hero,
+    html.dark body.endpoint-home .home-security-features,
     html.dark body.endpoint-achievements main > section,
     html.dark body.endpoint-goals main > section,
     html.dark body.endpoint-contact main > .grid > section,
@@ -4684,6 +4693,7 @@
       line-height: 1.02 !important;
     }
     html.dark body.endpoint-achievements main h2,
+    html.dark body.endpoint-home .home-security-features h2,
     html.dark body.endpoint-goals main h2,
     html.dark body.endpoint-contact main h2,
     html.dark body.endpoint-owner-panel main h2,
@@ -4693,6 +4703,8 @@
     }
     html.dark body.endpoint-achievements main p.text-sm,
     html.dark body.endpoint-achievements main p.text-xs,
+    html.dark body.endpoint-home .home-security-features p.text-sm,
+    html.dark body.endpoint-home .home-security-features p.text-xs,
     html.dark body.endpoint-goals main p.text-sm,
     html.dark body.endpoint-goals main p.text-xs,
     html.dark body.endpoint-contact main p.text-sm,
@@ -4704,6 +4716,7 @@
       color: #a1a1aa !important;
     }
     html.dark body.endpoint-achievements main [class*="tracking-"][class*="uppercase"],
+    html.dark body.endpoint-home .home-security-features [class*="tracking-"][class*="uppercase"],
     html.dark body.endpoint-goals main [class*="tracking-"][class*="uppercase"],
     html.dark body.endpoint-contact main [class*="tracking-"][class*="uppercase"],
     html.dark body.endpoint-owner-panel main [class*="tracking-"][class*="uppercase"],
@@ -4714,6 +4727,7 @@
     html.dark body.endpoint-achievements main article,
     html.dark body.endpoint-achievements main details,
     html.dark body.endpoint-achievements main form.rounded-3xl,
+    html.dark body.endpoint-home .home-security-features .rounded-2xl.border,
     html.dark body.endpoint-goals main article,
     html.dark body.endpoint-goals main .rounded-2xl.border,
     html.dark body.endpoint-goals main .rounded-3xl.border,
@@ -4963,6 +4977,28 @@
     }
     html:not(.dark) main .text-slate-400 {
       color: #64748b !important;
+    }
+    html:not(.dark) .home-security-features .home-feature-stat-strip > div {
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(241,245,249,0.84)) !important;
+      box-shadow: 0 12px 28px rgba(15,23,42,0.06) !important;
+    }
+    html:not(.dark) .home-security-features .home-feature-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.95)) !important;
+      box-shadow: 0 16px 32px rgba(15,23,42,0.05) !important;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+    html:not(.dark) .home-security-features .home-feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 34px rgba(15,23,42,0.08) !important;
+      border-color: rgba(99, 91, 255, 0.24) !important;
+    }
+    html:not(.dark) .home-hero .home-hero-badges span {
+      box-shadow: 0 8px 20px rgba(15,23,42,0.05);
+    }
+    html.dark .home-security-features .home-feature-stat-strip > div,
+    html.dark .home-security-features .home-feature-card {
+      box-shadow: none !important;
+      backdrop-filter: blur(10px);
     }
     .mobile-nav-strip {
       -ms-overflow-style: none;
